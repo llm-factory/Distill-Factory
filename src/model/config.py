@@ -8,11 +8,9 @@ class Config:
     def __init__(self, filename):
         self.conf_dict = yaml.safe_load(open(filename))
         openai_config: Dict = self.conf_dict.get("openai")
-        self.openai_base_url: str = openai_config.get("base_url")
-        self.openai_api_key: str = openai_config.get("api_key")
-        self.openai_model: str = openai_config.get("model")
-        self.temperature: float = openai_config.get("temperature")
-
-
-root_path = Path(__file__).parent.parent
-config = Config(root_path / "../config.yml")
+        self.base_url: str = openai_config.get("base_url")
+        self.api_key: str = openai_config.get("api_key")
+        self.model: str = openai_config.get("model")
+        self.temperature: float = openai_config.get("temperature","1.0")
+        self.save_dir: str = self.conf_dict.get("save_dir")
+        self.file_path: Path = self.conf_dict.get("file_path")
