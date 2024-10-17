@@ -6,7 +6,7 @@ import yaml
 
 class Config:
     def __init__(self, filename):
-        self.conf_dict = yaml.safe_load(open(filename))
+        self.conf_dict = yaml.safe_load(open(filename, encoding="utf-8"))
         openai_config: Dict = self.conf_dict.get("openai")
         self.base_url: str = openai_config.get("base_url")
         self.api_key: str = openai_config.get("api_key")
