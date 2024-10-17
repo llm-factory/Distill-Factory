@@ -1,11 +1,10 @@
 import argparse
-import yaml
-from src.model.config import Config
-from src.common.message import *
-from src.api.api import *
-from src.strategy.method import *
-from src.strategy.getter import *
-from src.tools.tool import *
+import asyncio
+
+from model.config import Config
+from api.api import API
+from strategy.getter import StrategyGetter
+from tools.tool import read_file, save_QA_dataset
 
     
 async def main():
