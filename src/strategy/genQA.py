@@ -1,6 +1,6 @@
-from src.strategy.method import *
-from src.common.message import *
-from src.tools.tool import *
+from method import *
+from ..common.message import *
+from ..tools.tool import *
 from tqdm import tqdm
 
 from loguru import logger
