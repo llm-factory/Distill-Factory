@@ -1,4 +1,4 @@
-from ..strategy.genQA import *
+from strategy.genQA import genQA
 class StrategyGetter:
     @staticmethod
     def get_strategy(method_name):

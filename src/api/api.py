@@ -7,8 +7,8 @@ import asyncio
 
 
 
-from src.model.config import *
-from src.common.message import BaseMessage
+from model.config import Config
+from common.message import BaseMessage
 
 
 class BaseOpenAI():
