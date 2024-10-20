@@ -1,7 +1,6 @@
-import re
 from typing import List
-from .pattern import *;
-import jieba
+from .pattern import *
+
 def questions_filter(questions:List[str])-> List[str]:
     filtered = []
     for q in questions:
