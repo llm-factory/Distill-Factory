@@ -15,8 +15,8 @@ async def main():
     api  = API(config)
     text = read_file(config.file_path)
     Method = StrategyGetter.get_strategy(config.method)(api)
-    questions,answers = await Method.run(text,config.main_theme,num_question_per_title=10,batch_size=config.batch_size)
-    save_QA_dataset(questions,answers,config.save_dir)
+    questions,answers = await Method.run(config,num_question_per_title=10,concurrent_api_requests_num=config.concurrent_api_requests_num)
+    save_QA_dataset(questions,answers,config.save_dir,"QA_backtrans0.json")
     
 
 if __name__ == "__main__":

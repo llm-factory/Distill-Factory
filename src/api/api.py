@@ -3,10 +3,6 @@ from typing import List, Dict
 from openai import OpenAI as OpenAIClient
 from openai import AsyncOpenAI
 import asyncio
-
-
-
-
 from model.config import Config
 from common.message import BaseMessage
 
