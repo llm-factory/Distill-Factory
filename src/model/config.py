@@ -12,6 +12,8 @@ class Config:
         self.base_url: str = openai_config.get("base_url")
         if self.base_url is None:
             raise ValueError("base_url is required")
+        if self.base_url is None:
+            raise ValueError("base_url is required")
         self.api_key: str = openai_config.get("api_key")
         self.model: str = openai_config.get("model")
         self.temperature: float = openai_config.get("temperature", 1.0)

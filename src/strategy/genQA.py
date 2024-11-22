@@ -49,6 +49,7 @@ class genQA(Strategy):
         return all_questions,all_answers
 
 
+
     def genTitle(self,text,main_theme):
         print("======================Generating titles======================")
         prompt = buildMessages(
@@ -97,6 +98,7 @@ class genQA(Strategy):
             ]
         )
         personas = clean_and_split_reply(self.api.chat(prompt))
+        personas = clean_and_split_reply(self.api.chat(prompt))
         return personas
         
     async def generateQuestions(self, text, main_theme, num_question_per_title,titles,concurrent_api_requests_num=1):
@@ -109,6 +111,7 @@ class genQA(Strategy):
                 prompt = buildMessages(
                     [
                         UserMessage(
+                            f"根据以下文本：\n" + text + f"指向{main_theme}生成{num_question_per_title}个在不同场景下与“{batch_titles[i]}”有关的可以根据文本内容回答的问题，问题必须明确指向{main_theme}以避免指向模糊。每个问题一行，以数字加”.“开始，不能重复"
                             f"根据以下文本：\n" + text + f"指向{main_theme}生成{num_question_per_title}个在不同场景下与“{batch_titles[i]}”有关的可以根据文本内容回答的问题，问题必须明确指向{main_theme}以避免指向模糊。每个问题一行，以数字加”.“开始，不能重复"
                         )
                     ]
@@ -143,11 +146,14 @@ class genQA(Strategy):
         answers = []
         for idx in tqdm(range(0,len(questions),concurrent_api_requests_num),desc="Generating answers"):
             batch_questions = questions[idx:idx+concurrent_api_requests_num]
+        for idx in tqdm(range(0,len(questions),concurrent_api_requests_num),desc="Generating answers"):
+            batch_questions = questions[idx:idx+concurrent_api_requests_num]
             prompts=  []
             for i in range(len(batch_questions)):
                 prompt = buildMessages(
                     [
                         UserMessage(
+                            f"{text}\n根据以上文本直接回答以下问题：{batch_questions[i]} 答案中不能出现'根据文本','根据文本中'等字样。对于无法从文本中获取答案的问题，输出“无法回答”。"
                             f"{text}\n根据以上文本直接回答以下问题：{batch_questions[i]} 答案中不能出现'根据文本','根据文本中'等字样。对于无法从文本中获取答案的问题，输出“无法回答”。"
                         )
                     ]
