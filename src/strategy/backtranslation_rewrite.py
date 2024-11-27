@@ -4,53 +4,94 @@ from tools.tool import clean_and_split_reply, clean_and_split_reply_list, clean_
 from tools.filter import *
 from tqdm import tqdm
 from tools.filter import answers_filter
-from tools.tool import read_file
-import random
-import os
+from tools.tool import read_file,getFilePaths
 import re
 import jieba
-from loguru import logger
+import logging
+import asyncio
 
+logger = logging.getLogger('logger')
 class backtranslation_rewrite(Strategy):
     def __init__(self, api):
         super().__init__(api)
     
-    async def run(self,config, num_question_per_title=10, concurrent_api_requests_num=1):
+class backtranslation_rewrite(Strategy):
+    def __init__(self, api):
+        super().__init__(api)
+    
+    async def process_single_file(self, file_path: str, main_theme: str, concurrent_api_requests_num: int):
+        text = read_file(file_path)        
+        logger.info('='*30 + f'Text of {file_path}' + '='*30)
+        logger.info(text[:200])
+        logger.info(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
+        titles = self.genTitle(text, main_theme)
+        titles = await self.splitTitles(titles, concurrent_api_requests_num)
+        logger.info(f"{'=' * 30}Titles of {file_path}{'='*30}")
+        logger.info(titles)
+        logger.info(f"{'=' * 30}Generating Questions and Factlist For {file_path}{'='*30}")
+        questions, factlist, extraction2questions = await getFactlist(
+            self,
+            text,
+            titles,
+            main_theme,
+            concurrent_api_requests_num
+        )
+        logger.info(f"{'=' * 30}Generating Answers For {file_path}{'='*30}")
+        answers = await get_answer(
+            self,
+            questions,
+            text,
+            concurrent_api_requests_num
+        )
+        
+        answers, idxs_to_remove = answers_filter(answers)
+        questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
+        
+        return questions, answers, text
+
+    async def run(self, config, num_question_per_title=10, concurrent_api_requests_num=1):
         main_theme = config.main_theme
-        if(config.file_folder):
-            file_paths = [f for f in os.listdir(config.file_folder) if f.endswith('.md') or f.endswith('.txt')]
-        else:
-            file_paths = [config.file_path]
+        file_paths = getFilePaths(config.file_folder, config.file_path, config.file_type)
+        logger.info(f"{'=' * 30}File Paths{'='*30}")
+        logger.info(file_paths)
+
+        tasks = [
+            self.process_single_file(
+                file_path, 
+                main_theme,
+                concurrent_api_requests_num
+            )
+            for file_path in file_paths
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        
         all_questions = []
         all_answers = []
-        for file_path in file_paths:
-            text = read_file(file_path)        
-            titles = self.genTitle(text,main_theme)
-            titles = await self.splitTitles(titles,concurrent_api_requests_num)
-            print('-----------titles----------------')
-            print(titles)
-            
-            questions,factlist,extraction2questions = await getFactlist(self,text,titles,main_theme,concurrent_api_requests_num)
-            answers = await get_answer(self,questions,text,concurrent_api_requests_num)
-            answers,idxs_to_remove = answers_filter(answers)
-            questions = [q for idx,q in enumerate(questions) if idx not in idxs_to_remove]
-
+        all_texts = []
+        
+        for questions, answers, text in results:
             all_questions.extend(questions)
             all_answers.extend(answers)
-        all_answers = await rewrite_QA(self,all_questions,all_answers,text,concurrent_api_requests_num)
-
-        all_answers,idxs_to_remove = answers_filter(all_answers)
-        all_questions = [q for idx,q in enumerate(all_questions) if idx not in idxs_to_remove]
+            all_texts.append(text)            
+        logger.info(f"{'=' * 30}Rewriting QA Pairs{'='*30}")
+        all_answers = await rewrite_QA(
+            self,
+            all_questions,
+            all_answers,
+            text,
+            concurrent_api_requests_num
+        )
+        all_answers, idxs_to_remove = answers_filter(all_answers)
+        all_questions = [q for idx, q in enumerate(all_questions) if idx not in idxs_to_remove]
         
-        return all_questions,all_answers
+        return all_questions, all_answers
 
     def genTitle(self, text, main_theme):
         prompt = buildMessages([
-            UserMessage(f"{text}\n根据以上文本提取与{main_theme}相关的具有概括性的若干个小标题。小标题必须包含准确的信息，例如准确的时间、地点、人物、名称、事件等，不能有歧义，不能指向模糊。每个小标题一行，不要有重复.")
+            UserMessage(f"{text}\n根据以上文本提取与{main_theme}相关的具有概括性的若干个小标题。小标题必须包含准确的信息，例如准确的时间、地点、人物、名称、事件等，不能有歧义，不能指向模糊。每个小标题一行，不要有重复，不要有无关信息。")
         ])            
         titles = clean_and_split_titles(self.api.chat(prompt))
-        print('--------titles------------')
-        print(titles)
         return titles
     
     async def splitTitles(self, titles, concurrent_api_requests_num=1):
@@ -61,17 +102,15 @@ class backtranslation_rewrite(Strategy):
             for i in range(len(batch_titles)):
                 prompt = buildMessages([
                     SystemMessage(
-                        "你是一个擅长划分标题的助手。以下是一个标题,该标题可能包含多个事实，不够简洁。对于包含多个事实的标题你需要将该标题划分为多个小标题,每个小标题要包含原标题中的核心信息和一部分有效信息，不能改变原意，每个小标题一行。对于已经足够简洁的标题，则输出原标题。"    
+                        "你是一个擅长划分标题的助手。以下是一个标题,该标题可能包含多个事实，不够简洁。对于包含多个事实的标题你需要将该标题划分为多个小标题,每个小标题要包含原标题中的核心信息和一部分有效信息，不能改变原意，每个小标题一行，不输出额外信息。对于已经足够简洁的标题，则输出原标题。"    
                     ),
                     UserMessage(
-                        f"""标题: {batch_titles[i]}\n 只输出划分后的小标题或者原标题"""
+                        f"""标题: {batch_titles[i]}\n 只输出划分后的小标题或者原标题,不输出任何额外信息。"""
                     )
                 ])
                 prompts.append(prompt)
             titles = await self.api.async_chat(prompts)
             titles = clean_and_split_title_list(titles)
-            print('-----------splitTitles----------------')
-            print(titles)
             splitTitles.extend(titles)
         splitTitles = list(set(splitTitles))
         return splitTitles
@@ -95,18 +134,12 @@ async def getFactlist(self, text, titles, main_theme, concurrent_api_requests_nu
 标题: {title}
 你必须严格遵循以下规则：
 1.每条关键信息必须与标题{title}相关，包含标题{title}相关的信息。每条关键信息一行。
-2.每条关键信息必须包括{main_theme}相关字样。
-格式示例：
-关键1：
-关键2：
-关键3："""
+2.每条关键信息必须包括{main_theme}相关字样。"""
 )
                 ]
 )
             batch_prompts.append(prompt)
         batch_extractions = await self.api.async_chat(batch_prompts)
-        print('-----------batch_extractions----------------')
-        print(batch_extractions)
         for title, extractions_text in zip(batch_titles, batch_extractions):
             titleset = jieba.cut_for_search(title)
             titleset = list(";".join(titleset).split(';'))
@@ -116,39 +149,8 @@ async def getFactlist(self, text, titles, main_theme, concurrent_api_requests_nu
             main_theme_set = jieba.cut_for_search(main_theme)
             main_theme_set = list(";".join(main_theme_set).split(';'))
             
-            pattern = r'(关键\d+[: 、,：\n]?)(.*?)(?=关键\d+[: 、,：\n]?|\Z)'
-            matches = re.findall(pattern, extractions_text, re.S)
-            extractions = [match[1].strip() for match in matches]
+            extractions = clean_and_split_reply_list(extractions_text)
             extractions = [e for e in extractions if(any(theme in e for theme in (main_theme_set+titleset)))]
-            
-#             extractionsstr = "\n".join(f"关键{i+1}:{k}" for i, k in enumerate(extractions))
-#             prompt = buildMessages(
-#                 [
-#                 UserMessage(f"""
-# 作为一个AI阅读理解助手，你将在下列所给文本中，提取与所给标题相关的关键信息。
-# 文本: {text}
-# 标题: {title}
-# 你必须严格遵循以下规则：
-# 1.每条关键信息必须与标题{title}相关，包含标题{title}相关的信息。每条关键信息一行。
-# 2.每条关键信息必须包括{main_theme}相关字样。
-# 已提取的关键信息有：
-# {extractionsstr}
-# 生成的关键信息不要与已提取的关键信息重复。""")
-#                 ]
-#             )
-            
-#             new_extraction = (await self.api.async_chat([prompt]))[0]
-#             new_matches = re.findall(pattern, new_extraction, re.S)
-#             new_facts = [match[1].strip() for match in new_matches]
-#             new_facts = [e for e in new_facts if(any(theme in e for theme in (main_theme_set+titleset)))]
-#             new_facts = [l for l in new_facts if len(l) > 7]
-#             print('-----------new_facts----------------')
-#             print(new_facts)
-#             extractions.extend(new_facts)
-#             extractions = list(set(extractions))
-            print('-----------extractions----------------')
-            print(extractions)
-            print("generating questions from extractions")
             for ext_idx in range(0, len(extractions), concurrent_api_requests_num):
                 batch_extractions = extractions[ext_idx:ext_idx+concurrent_api_requests_num]
                 question_prompts = []
@@ -157,7 +159,7 @@ async def getFactlist(self, text, titles, main_theme, concurrent_api_requests_nu
                     prompt = buildMessages(
                     [
                         UserMessage(f"""
-请基于以下事实，生成5个清晰且能够依据该事实清晰正确回答的问题。
+请基于以下事实，生成3个清晰且能够依据该事实清晰正确回答的问题。
 事实:{extraction}
 每个问题占一行。禁止使用模糊的指代词(如"这个","那个","它",'这次','这天'等)。问题必须包含事实中的关键细节以及关键信息（如具体的名称、时间、地点、事件等），以避免提问模糊或不清晰。"""
                     )
@@ -166,18 +168,13 @@ async def getFactlist(self, text, titles, main_theme, concurrent_api_requests_nu
                     question_prompts.append(prompt)
                 
                 batch_gen_questions = await self.api.async_chat(question_prompts)
-                print('-----------batch_gen_questions----------------')
-                print(batch_gen_questions)
                 for extraction, gen_questions in zip(batch_extractions, batch_gen_questions):
-                    gen_questions = gen_questions.split('\n')
-                    gen_questions = [re.sub(r'^\d+\.', '', l) for l in gen_questions]
-                    gen_questions = [l.strip() for l in gen_questions if len(l) > 5]
+                    gen_questions = clean_and_split_reply(gen_questions)
                     
                     valid_questions = []
                     for q_idx in range(0, len(gen_questions), concurrent_api_requests_num):
                         batch_questions = gen_questions[q_idx:q_idx+concurrent_api_requests_num]
                         validation_prompts = []
-                        
                         for q in batch_questions:
                             prompt = buildMessages([
                                 UserMessage(f"""
@@ -195,7 +192,6 @@ async def getFactlist(self, text, titles, main_theme, concurrent_api_requests_nu
                             validation_prompts.append(prompt)
                         
                         validation_results = await self.api.async_chat(validation_prompts, temperature=0.7)
-                        
                         for q, result in zip(batch_questions, validation_results):
                             if "【有效】" in result.split('\n')[-1]:
                                 valid_questions.append(q)
@@ -225,6 +221,13 @@ async def get_answer(self, questions, text, concurrent_api_requests_num=1):
             ]))
         
         batch_answers = await self.api.async_chat(answer_prompts)
+        for q,a in zip(batch_questions,batch_answers):
+            logger.info(f"{'-'*20}QA pair{'-'*20}")
+            logger.info(f"{'-'*15}Question{'-'*15}")
+            logger.info(f"{q}")
+            logger.info(f"{'-'*15}Answer{'-'*15}")
+            logger.info(f"{a}")
+        
         answers.extend(batch_answers)
     
     return answers
@@ -246,8 +249,13 @@ async def rewrite_QA(self, questions,answers, text, concurrent_api_requests_num=
             ])
             prompts.append(message)
         answers = await self.api.async_chat(prompts)
-
         new_answers.extend(answers)
+        for q,a in zip(batch_questions,answers):
+            logger.info(f"{'-'*20}rewritten QA pair{'-'*20}")
+            logger.info(f"{'-'*15}Question{'-'*15}")
+            logger.info(f"{q}")
+            logger.info(f"{'-'*15}Answer{'-'*15}")
+            logger.info(f"{a}")
 
     return new_answers
 

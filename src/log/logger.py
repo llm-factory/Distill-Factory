@@ -1,39 +1,24 @@
 import sys
 from pathlib import Path
 import logging
-import logging
 import sys
 
-class Logger(logging.Logger):
-    def __init__(self, filename):
-        super().__init__(filename)
-        self.filename = filename
-        self.terminal = sys.stdout
-        with open(self.filename, "w", encoding="utf-8") as log_file:
-            log_file.write("")
-
-    def write(self, message):
-        self.terminal.write(message) 
-        self.terminal.flush()         
-        with open(self.filename, "a", encoding="utf-8") as log_file:
-            log_file.write(message)
-            log_file.flush()
-        # print("file is closed")
-        
-
-    def flush(self):
-        self.terminal.flush()
-
-    def isatty(self):
-        return False
+def setup_logger(log_file):
+    with open(log_file, 'w', encoding='utf-8') as f:
+        f.write('')
+    log = logging.getLogger('logger')
+    log.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fileHandler = logging.FileHandler(log_file, encoding='utf-8')
+    streamHandler = logging.StreamHandler(sys.stderr)
 
     
-
-def read_logs():
-    sys.stdout.flush()
-    with open("output.log", "r", encoding="utf-8") as f:
-        return f.read()
-
-def flush():
-    with open("output.log", "w", encoding="utf-8") as f:
-        f.write("")
+    fileHandler.setLevel(logging.INFO)
+    streamHandler.setLevel(logging.DEBUG)
+    
+    fileHandler.setFormatter(formatter)
+    streamHandler.setFormatter(formatter)
+    
+    log.addHandler(fileHandler)
+    log.addHandler(streamHandler)
+    return log
