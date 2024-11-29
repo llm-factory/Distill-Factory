@@ -167,16 +167,10 @@ class genQA(Strategy):
             for i in range(len(batch_titles)):
                 prompt = buildMessages(
                     [
-                        SystemMessage(f"您是一位航空爱好者。请根据以下内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'。您的问题包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
+                        SystemMessage(f"请根据以下内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'。您的问题需包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
                         UserMessage(
                             f"文本:{text}\n每个问题一行，以数字加'. '开始，不能重复。"
-                        ),
-                        # SystemMessage(f"你是一名{main_theme}的乘客，请根据以下文件提出{num_question_per_title}个您可能感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题"),
-                        # UserMessage(
-                        #     f"根据以下文本：\n" + text + f"指向{main_theme}生成{num_question_per_title}个在不同场景下与“{batch_titles[i]}”有关的可以根据文本内容回答的问题，问题必须明确指向{main_theme}以避免指向模糊"
-                        #     f"问题中必须包含{main_theme}字样，问题中不能出现'根据文本内容','根据文本','根据以上文本'等字样，每个问题一行，以数字加'. '开始，不能重复"
-                        # ),
-                        
+                        ),                        
                     ]
                 )
                 logger.info(f"{'-'*20}Prompt of {batch_titles[i]}{'-'*20}")
@@ -188,31 +182,10 @@ class genQA(Strategy):
             genQuestions = clean_and_split_reply_list(genQuestions)
             questions.extend(genQuestions)
             prompts = []
-            # for i in range(len(batch_titles)):
-            #     prompt = buildMessages(
-            #         [
-                        
-            #             SystemMessage(f"请根据以下文本内容指向{main_theme}提出{num_question_per_title}个您可能感兴趣的，在不同场景下不含“{i}”但需要结合文本中关于{batch_titles[i]}的知识才能回答的问题"),
-            #             UserMessage(
-            #                 f"文本:{text}\n每个问题一行，以数字加'. '开始，不能重复。问题中必须明确指向{main_theme}的内容,包含其中的字样。"
-            #             ),
-            #             # UserMessage(
-            #             #     f"请根据以下文本内容{text}指向{main_theme}提出{num_question_per_title}个您可能感兴趣的在不同场景下不含“{i}”但需要结合文本中关于{batch_titles[i]}的知识才能回答的问题，每个问题一行，以数字加”.“开始，不能重复"
-            #             #     f"问题中必须明确指向{main_theme}，问题中不能出现'根据文本内容','根据文本','根据以上文本'等字样，每个问题一行，以数字加'. '开始，不能重复"
-            #             # )
-            #         ]
-            #     )
-            #     prompts.append(prompt)
-            # genQuestions = await self.api.async_chat(prompts)
-            # genQuestions = clean_and_split_reply_list(genQuestions)
-            # logger.info('-----------Questions----------------')
-            # logger.info(genQuestions)
-            # questions.extend(genQuestions)
         return questions
     
     async def getAnswers(self, text,questions,concurrent_api_requests_num=1,main_theme=""):
         logger.info("======================Generating Answers======================")
-        style= ["热情","细致","专业","友好","简略","幽默"]
         answers = []
         for idx in tqdm(range(0,len(questions),concurrent_api_requests_num),desc="Generating answers"):
             batch_questions = questions[idx:idx+concurrent_api_requests_num]
@@ -220,7 +193,7 @@ class genQA(Strategy):
             for i in range(len(batch_questions)):
                 prompt = buildMessages(
                     [
-                        SystemMessage(f"{text}\n你是一位AI助手，请礼貌、{random.choice(style)}地回复以下问题。对于无法回答的问题，请回复'无法回答'"),
+                        SystemMessage(f"{text}\n你是一位AI助手，请礼貌地回复以下问题。对于无法回答的问题，请回复'无法回答'"),
                         UserMessage(
                             f"{batch_questions[i]}"
                         )
