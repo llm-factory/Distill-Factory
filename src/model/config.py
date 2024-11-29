@@ -28,6 +28,8 @@ class Config:
         self.method: str = self.conf_dict.get("method")
         self.file_type: str = self.conf_dict.get("file_type", "txt")
         self.save_file_name: str = self.conf_dict.get("save_file_name", "dataset.json")
+        self.is_structure_data: bool = self.conf_dict.get("is_structure_data", False)
+        self.text_template: str = self.conf_dict.get("text_template", None)
     
     def load_config(self, file_path: str) -> Dict:
         with open(file_path, "r", encoding="utf-8") as f:

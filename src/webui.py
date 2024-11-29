@@ -5,7 +5,6 @@ import gradio as gr
 from model.config import Config
 from api.api import API
 from strategy.getter import StrategyGetter
-from tools.tool import save_QA_dataset
 from log.logger import setup_logger
 
 class WebUI:
@@ -43,8 +42,10 @@ class WebUI:
             main_theme = config_dict.get("main_theme", "")
             concurrent_api_requests_num = config_dict.get("concurrent_api_requests_num", 1)
             method = config_dict.get("method", "")
-            file_types = config_dict.get("file_type", "txt")
-            return model, base_url, api_key, save_dir, file_path, file_folder, file_name,main_theme, concurrent_api_requests_num, method, file_types
+            file_types = config_dict.get("file_type", "txt").split()
+            is_structure_data = config_dict.get("is_structure_data", False)
+            text_template = config_dict.get("text_template", None)
+            return model, base_url, api_key, save_dir, file_path, file_folder, file_name,main_theme, concurrent_api_requests_num, method, file_types, is_structure_data, text_template
         return "Error: Config path is empty"
 
     def create_ui(self):
@@ -83,6 +84,7 @@ class WebUI:
                         label="Concurrent Api Requests Num",
                         value=1,
                         info="api并发请求数",
+                        minimum=1,
                         scale = 2
                     )
                     method = gr.Dropdown(
@@ -94,16 +96,29 @@ class WebUI:
                     file_types = gr.Dropdown(
                         label="File Type",
                         info="文件类型",
-                        multiselect=True, allow_custom_value=True, scale=4)
-
-                    config_path.submit(self.read_from_configs,inputs=[config_path],outputs=[model, base_url, api_key, save_dir, file_path, file_folder, file_name,main_theme, concurrent_api_requests_num, method,file_types])
+                        multiselect=True, allow_custom_value=True, scale=2)
+                
+                    is_structure_data = gr.Checkbox(
+                        label="Is Structure Data",
+                        show_label=True,
+                        info="是否为结构化JSON数据",
+                        value=False
+                    )
+                
+                    text_template = gr.Textbox(
+                        label="Text Template",
+                        info="JSON数据格式化模板",
+                        lines=3,
+                        scale=3
+                    )
+                    config_path.submit(self.read_from_configs,inputs=[config_path],outputs=[model, base_url, api_key, save_dir, file_path, file_folder, file_name,main_theme, concurrent_api_requests_num, method,file_types,is_structure_data,text_template])
 
                 task_output = gr.Textbox(
                     label="输出",
                     lines=15,
                     max_lines=15,
                     interactive=False,
-                    autoscroll = False,
+                    autoscroll = True,
                     show_copy_button = True,
                     
                 )
@@ -118,8 +133,11 @@ class WebUI:
 
                 async def config_loader_and_run(config_path, model, base_url, api_key, 
                                                 save_dir, file_path, file_folder, main_theme, 
-                                                concurrent_api_requests_num, method,file_types,file_name):
+                                                concurrent_api_requests_num, method,file_types,file_name,
+                                                is_structure_data,text_template
+                                                ):
                     try:
+                        self.logger = setup_logger("output.log")
                         config_dict = {
                             "openai": {
                                 "model": model,
@@ -133,29 +151,28 @@ class WebUI:
                             "concurrent_api_requests_num": int(concurrent_api_requests_num),
                             "method": method,
                             "file_type": list(set(file_types)),
-                            "save_file_name": file_name
+                            "save_file_name": file_name,
+                            "is_structure_data": is_structure_data,
+                            "text_template": text_template
                         }
-                        self.logger.info("============Start generating============")
                         self.config = Config(config_dict=config_dict)
                         self.api = API(self.config)
                         Method = StrategyGetter.get_strategy(self.config.method)(self.api)
-                        self.logger.info("cocurrent_api_requests_num",self.config.concurrent_api_requests_num)
                         questions, answers = await Method.run(
                             config=self.config,
                             num_question_per_title=3,
                             concurrent_api_requests_num=self.config.concurrent_api_requests_num
                         )
-                        save_QA_dataset(questions, answers, self.config.save_dir, file_name)
                         return
                     except Exception as e:
-                        return f"Error: {str(e)}"
+                        self.logger.error(f"Error: {e}")
 
                 generate_button.click(
                     fn=config_loader_and_run,
                     inputs=[config_path, model, base_url, api_key, save_dir, 
                             file_path, file_folder, main_theme, 
                             concurrent_api_requests_num, method,
-                            file_types,file_name
+                            file_types,file_name,is_structure_data,text_template
                             ],
                     outputs=None, 
                     queue=True

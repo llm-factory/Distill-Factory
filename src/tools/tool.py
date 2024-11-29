@@ -1,19 +1,72 @@
 import json
-from typing import List, Union
+from typing import List, Union, Dict
 import re
 import os
 from pathlib import Path
 import logging
+
 logger = logging.getLogger("logger")
 def read_file(file_path:str)-> str:
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
+def load_datas(file_path,config):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        if config.is_structure_data:
+            return json.load(file)
+        else:
+            texts = file.read()
+            textsList = [texts[i:i+4000] for i in range(0, len(texts), 4000)]
+            return textsList
+
+def parse_data(raw_data, config):
+    """
+    raw_data: str or dict
+    return: list[str]
+    """
+    if not config.is_structure_data:
+        return [raw_data]
+
+    try:
+        structured_data = load_json(raw_data)
+        if not structured_data:
+            return [raw_data]
+            
+        formatted_text = format_structured_data(
+            structured_data,
+            config.text_template
+        )
+        return [formatted_text]
+        
+    except Exception as e:
+        raise Exception(f"Error: {e}")
 
 def write_json_file(file_path:str, dataset:List[dict]):
     with open(file_path, 'w', encoding='utf-8') as file:
         json.dump(dataset, file, ensure_ascii=False, indent=2)
         
+def format_structured_data(data: Dict, template: str) -> str:
+    try:
+        formatted_data = {}
+        for key, value in data.items():
+            if isinstance(value, list):
+                formatted_data[key] = '、'.join(str(v) for v in value)
+            else:
+                formatted_data[key] = value            
+        return template.format(**formatted_data)
+    except KeyError as e:
+        raise KeyError(f"Template missing key: {str(e)}")
+    except Exception as e:
+        raise Exception(f"Error: {e}")
+
+def load_json(data: Union[str, Dict]) -> Dict:
+    if isinstance(data, dict):
+        return data        
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError:
+        return {}        
+
 def clean_and_split_reply(lines:str)-> List[str]:
     lines = lines.split('\n')
     lines = [l.strip(".#`\\\"\' ") for l in lines]
@@ -67,23 +120,10 @@ def getFilePaths(folder,file,file_type:list[str]):
         paths.append(file)
     return paths
 
-def parseJsons(text: List[str],key:str) -> List[str]:
-    originalLength = len(text)
-    Items = []
-    for t in text:
-        try:
-            parsed_json = json.loads(t)
-        except json.JSONDecodeError as e:
-            logger.error(f"Error: {e}")
-            continue
-        for q in parsed_json:
-            item = q.get(key)
-            if item is not None:
-                Items.append(item)
-            else:
-                logger.error(f"Warning: '{key}' key missing in {q}")
-    parsedLength = len(Items)
-    
-    logger.warning(f"ratio: {parsedLength}/{originalLength}")
-    
-    return Items
+def init_QA_dataset(save_dir,name):
+    datas = []
+    path = f"{save_dir}/{name}"
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(datas, file, ensure_ascii=False, indent=2)

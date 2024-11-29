@@ -5,5 +5,5 @@ ABANDONED_PATTERN_IN_QUESTIONS = [
 ]
 
 ABANDONED_PATTERN_IN_ANSWERS = [
-    r"无法(回答|确定|解答)"
+    r"(无法|不能|不可以|没办法|我不能|我不)(给出|提供|推断|判断)?(回答|确定|解答)",
 ]

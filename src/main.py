@@ -13,10 +13,9 @@ async def main():
     args = parser.parse_args()
     config = Config(file_path=args.config)         
     api  = API(config)
-    logger = setup_logger("output.log")
+    logger = setup_logger(f"{config.save_file_name}.log")
     Method = StrategyGetter.get_strategy(config.method)(api)
-    questions,answers = await Method.run(config,num_question_per_title=10,concurrent_api_requests_num=config.concurrent_api_requests_num)
-    save_QA_dataset(questions,answers,config.save_dir,config.save_file_name)
+    await Method.run(config,num_question_per_title=3,concurrent_api_requests_num=config.concurrent_api_requests_num)
     
 
 if __name__ == "__main__":

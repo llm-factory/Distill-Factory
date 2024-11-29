@@ -12,7 +12,6 @@ def setup_logger(log_file):
     fileHandler = logging.FileHandler(log_file, encoding='utf-8')
     streamHandler = logging.StreamHandler(sys.stderr)
 
-    
     fileHandler.setLevel(logging.INFO)
     streamHandler.setLevel(logging.DEBUG)
     
