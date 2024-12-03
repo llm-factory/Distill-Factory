@@ -41,9 +41,9 @@ file_type: rst                         # 文件类型
 | main_theme                  | 文本主题，用于生成相关问题                 | \                |
 | concurrent_api_requests_num | API并发请求数量       | 4                        |
 | method                      | 数据生成方式 | "genQA" |
-|save_file_name|文件保存名，如'dataset.json'|"test.json"|
+|save_file_name|文件保存名，如'dataset.json'|"dataset.json"|
 |is_structure_data|是否是结构化json数据，是则按照text_template读取文本，否则直接读入纯文本|False|
-|text_template|从json格式构造生成问题所需文本的模板。如"标题\n{msg_title}\n 日期:{msg_date}\n 内容:{msg_context}\n"|\|
+|text_template|从json格式构造生成问题所需文本的模板。如"标题\n{msg_title}\n 日期:{msg_date}\n 内容:{msg_context}\n"| \ |
 
 > 输入纯文本时请设置 is_structure_data 为 False
 
