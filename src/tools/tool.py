@@ -6,17 +6,18 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger("logger")
+
 def read_file(file_path:str)-> str:
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
-def load_datas(file_path,config):
+def load_datas(file_path,config,chunk_size=3800):
     with open(file_path, 'r', encoding='utf-8') as file:
         if config.is_structure_data:
             return json.load(file)
         else:
             texts = file.read()
-            textsList = [texts[i:i+4000] for i in range(0, len(texts), 4000)]
+            textsList = [texts[i:i+chunk_size] for i in range(0, len(texts), chunk_size)]
             return textsList
 
 def parse_data(raw_data, config):
@@ -42,6 +43,8 @@ def parse_data(raw_data, config):
         raise Exception(f"Error: {e}")
 
 def write_json_file(file_path:str, dataset:List[dict]):
+    if not os.path.exists(os.path.dirname(file_path)):
+        os.makedirs(os.path.dirname(file_path))
     with open(file_path, 'w', encoding='utf-8') as file:
         json.dump(dataset, file, ensure_ascii=False, indent=2)
         
@@ -69,7 +72,7 @@ def load_json(data: Union[str, Dict]) -> Dict:
 
 def clean_and_split_reply(lines:str)-> List[str]:
     lines = lines.split('\n')
-    lines = [l.strip(".#`\\\"\' ") for l in lines]
+    lines = [l.strip("。.^#`\\\"\' ") for l in lines]
     lines = [re.sub(r'^[ :：\.、,\'\"]?\d+[ :：\.、]', '', l) for l in lines]
     lines = [l for l in lines if len(l) > 10]
     return lines
@@ -96,8 +99,21 @@ def clean_and_split_title_list(titlelist:List[str])->List[str]:
         cleaned.extend(title)
     return cleaned
     
+
+def init_QA_dataset(save_dir,name):
+    datas = []
+    path = f"{save_dir}/{name}"
+    if not os.path.exists(os.path.dirname(path)):
+        os.makedirs(os.path.dirname(path))
+    with open(path, 'w', encoding='utf-8') as file:
+        json.dump(datas, file, ensure_ascii=False, indent=2)
+        
+
+def save_QA_dataset(questions,answers,save_dir,name): 
+    path = f"{save_dir}/{name}"
+    with open(path, 'r', encoding='utf-8') as file:
+        datas = json.load(file)
     
-def save_QA_dataset(questions,answers,save_dir,name):
     dataset = []
     for q,a in zip(questions,answers):
         dataset.append(
@@ -105,9 +121,10 @@ def save_QA_dataset(questions,answers,save_dir,name):
              "input":"",
              "output":a             
              })
-    path = f"{save_dir}/{name}"
-    write_json_file(path,dataset)
-    print(f"dataset with {len(dataset)} samples saved to {path}")
+    datas.extend(dataset)
+    write_json_file(path,datas)
+    logger.info(f"add {len(dataset)} samples to {path}")
+    logger.info(f"total samples num of {path}: {len(datas)}")
     
 def getFilePaths(folder,file,file_type:list[str]):
     paths = []
@@ -119,11 +136,3 @@ def getFilePaths(folder,file,file_type:list[str]):
     else:
         paths.append(file)
     return paths
-
-def init_QA_dataset(save_dir,name):
-    datas = []
-    path = f"{save_dir}/{name}"
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
-    with open(path, 'w', encoding='utf-8') as file:
-        json.dump(datas, file, ensure_ascii=False, indent=2)

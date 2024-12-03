@@ -1,6 +1,4 @@
 # DatasetGenerator
-a tool for gerenate dataset from doc 
-
 ## 使用步骤
 
 ### 安装
@@ -33,8 +31,8 @@ file_type: rst                         # 文件类型
 
 | 参数名                      | 参数介绍                                   | 默认值                   |
 | --------------------------- | ------------------------------------------ | ------------------------ |
-| openai.model                | API模型名称                                | \                      |
-| openai.base_url             | APIURL地址                                 | \                      |
+| openai.model                | API 模型名称                                | \                      |
+| openai.base_url             | API URL地址                                 | \                      |
 | openai.api_key              | API密钥                                    | \                      |
 | save_dir                    | 生成的数据集保存目录                       | "./example"              |
 | file_path                   | 源文件路径，用于单文件处理                 | \ |
@@ -46,6 +44,8 @@ file_type: rst                         # 文件类型
 |save_file_name|文件保存名，如'dataset.json'|"test.json"|
 |is_structure_data|是否是结构化json数据，是则按照text_template读取文本，否则直接读入纯文本|False|
 |text_template|从json格式构造生成问题所需文本的模板。如"标题\n{msg_title}\n 日期:{msg_date}\n 内容:{msg_context}\n"|\|
+
+> 输入纯文本时请设置 is_structure_data 为 False
 
 ### 使用方式
 
@@ -94,7 +94,7 @@ WebUI 通过在 `src` 目录下运行以下命令启动：
 python webui.py
 ```
 
-若点击所提供 url（通常是:http://127.0.0.1:7860）后出现以下界面则说明启动成功。
+若点击所提供 url（通常是:http://127.0.0.1:7860 ）后出现以下界面则说明启动成功。
 
 <img src="assets/image-20241129181253778.png" alt="image-20241129181253778" style="zoom:50%;" />
 

@@ -21,3 +21,11 @@ def setup_logger(log_file):
     log.addHandler(fileHandler)
     log.addHandler(streamHandler)
     return log
+
+def flush_logger():
+    logger = logging.getLogger("logger")
+    if logger.handlers:
+        for handler in logger.handlers:
+            handler.flush()
+            if isinstance(handler, logging.FileHandler):
+                handler.stream.flush()

@@ -5,7 +5,7 @@ import gradio as gr
 from model.config import Config
 from api.api import API
 from strategy.getter import StrategyGetter
-from log.logger import setup_logger
+from log.logger import setup_logger,flush_logger
 
 class WebUI:
     def __init__(self):
@@ -137,7 +137,6 @@ class WebUI:
                                                 is_structure_data,text_template
                                                 ):
                     try:
-                        self.logger = setup_logger("output.log")
                         config_dict = {
                             "openai": {
                                 "model": model,

@@ -20,13 +20,12 @@ class genQA(Strategy):
         datas = load_datas(file_path,config) 
         questions = []
         answers = []
-        logger.info(f"load data: {datas}")
         for i in range(0,len(datas),concurrent_api_requests_num):
             batch_datas = datas[i:i+concurrent_api_requests_num]
             tasks = []
             for data in batch_datas:
                 texts= parse_data(data,config)
-                logger.error(f"texts: {texts}")
+                logger.info(f"texts: {texts}")
                 for text in texts:
                     if(text == ""):
                         continue
@@ -43,8 +42,6 @@ class genQA(Strategy):
         logger.info(text[:200])
         logger.info(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
         titles = await self.genTitle(text, main_theme)
-        logger.info(f"{'=' * 30}Splitting Titles For {file_path}{'='*30}")
-        # titles = await self.splitTitles(titles, concurrent_api_requests_num)
         logger.info(f"{'=' * 30}Titles of {file_path}{'='*30}")
         logger.info(titles)
         logger.info(f"{'=' * 30}Generating Questions For {file_path}{'='*30}")
@@ -102,7 +99,8 @@ class genQA(Strategy):
             )
             for file_path in file_paths
         ]
-        concurrent_api_requests_num = 1
+        if(config.is_structure_data):    
+            concurrent_api_requests_num = 1
         for i in range(0,len(tasks),concurrent_api_requests_num):
             batch_tasks = tasks[i:i+concurrent_api_requests_num]
             results = await asyncio.gather(*batch_tasks)
@@ -167,7 +165,7 @@ class genQA(Strategy):
             for i in range(len(batch_titles)):
                 prompt = buildMessages(
                     [
-                        SystemMessage(f"请根据以下内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'。您的问题需包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
+                        SystemMessage(f"你是一位对{main_theme}感兴趣的AI助手。请根据以下内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'。您的问题需包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
                         UserMessage(
                             f"文本:{text}\n每个问题一行，以数字加'. '开始，不能重复。"
                         ),                        
@@ -181,7 +179,6 @@ class genQA(Strategy):
             logger.info(genQuestions)
             genQuestions = clean_and_split_reply_list(genQuestions)
             questions.extend(genQuestions)
-            prompts = []
         return questions
     
     async def getAnswers(self, text,questions,concurrent_api_requests_num=1,main_theme=""):
