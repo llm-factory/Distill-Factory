@@ -45,7 +45,9 @@ file_type: rst                         # 文件类型
 |is_structure_data|是否是结构化json数据，是则按照text_template读取文本，否则直接读入纯文本|False|
 |text_template|从json格式构造生成问题所需文本的模板。如"标题\n{msg_title}\n 日期:{msg_date}\n 内容:{msg_context}\n"| \ |
 
-> 输入纯文本时请设置 is_structure_data 为 False
+> 输入纯文本时请设置 is_structure_data 为 False。
+>
+> 设置 is_structure_data 为 True 时请确保数据包含 text_template 中对应的键。
 
 ### 使用方式
 
