@@ -74,6 +74,7 @@ def clean_and_split_reply(lines:str)-> List[str]:
     lines = lines.split('\n')
     lines = [l.strip("。.^#`\\\"\' ") for l in lines]
     lines = [re.sub(r'^[ :：\.、,\'\"]?\d+[ :：\.、]', '', l) for l in lines]
+    lines = [l.strip("。.^#`\\\"\' ") for l in lines]
     lines = [l for l in lines if len(l) > 10]
     return lines
 

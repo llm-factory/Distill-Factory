@@ -1,0 +1,13 @@
+openai:
+  model: ""
+  base_url: ""
+  api_key: ""
+
+file_path: "./example/dataset/dataset.json"
+main_theme: "地理科普"
+save_dir: "../example/result"
+save_file_name: "jsonfile_demo_QA.json"
+concurrent_api_requests_num: 1
+method: "genQA_persona"
+is_structure_data: True  # 表示输入文件是结构化数据
+text_template: "【标题】: {title}\n【来源】: {source}\n【时间】: {date}\n【内容】: {content}\n"  # JSON 数据的格式模板

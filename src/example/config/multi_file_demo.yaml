@@ -1,0 +1,12 @@
+openai:
+  model: ""
+  base_url: ""
+  api_key: ""
+
+file_folder: "example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
+file_type: "rst md" # 意味着 example/LLaMA-Factory-Doc 文件夹下所有的 rst 与 md 格式的文件都会被用于生成问答数据集
+main_theme: "LLaMA-Factory使用文档"
+save_dir: "example/result"
+save_file_name: "docs_QA.json"
+method: "genQA"
+concurrent_api_requests_num: 1

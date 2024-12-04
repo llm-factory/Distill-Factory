@@ -27,7 +27,7 @@ class backtranslation_rewrite(Strategy):
             tasks = []
             for data in batch_datas:
                 texts = parse_data(data, config)
-                logger.info(f"texts: {texts}")
+                logger.debug(f"texts: {texts}")
                 for text in texts:
                     if(text == ""):
                         continue
@@ -41,28 +41,28 @@ class backtranslation_rewrite(Strategy):
         return questions, answers
 
     async def process_single_data(self, config, text, file_path: str, main_theme: str, concurrent_api_requests_num: int):
-        logger.info('='*30 + f'Text of {file_path}' + '='*30)
-        logger.info(text[:200])
+        logger.debug('='*30 + f'Text of {file_path}' + '='*30)
+        logger.debug(text[:200])
         
-        logger.info(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
+        logger.debug(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
         titles = await self.genTitle(text, main_theme)
-        logger.info(f"{'=' * 30}Splitting Titles For {file_path}{'=' * 30}")
+        logger.debug(f"{'=' * 30}Splitting Titles For {file_path}{'=' * 30}")
         titles = await self.splitTitles(titles, concurrent_api_requests_num)
-        logger.info(f"{'=' * 30}Titles of {file_path}{'='*30}")
-        logger.info(titles)
+        logger.debug(f"{'=' * 30}Titles of {file_path}{'='*30}")
+        logger.debug(titles)
         
-        logger.info(f"{'=' * 30}Generating Questions and Factlist For {file_path}{'='*30}")
+        logger.debug(f"{'=' * 30}Generating Questions and Factlist For {file_path}{'='*30}")
         questions, factlist,extraction2questions = await self.getFactlist(text, titles, main_theme, concurrent_api_requests_num)
         questions = questions_filter(questions)
-        logger.info(f"{'=' * 30}Questions of {file_path}{'='*30}")
-        logger.info(questions)
+        logger.debug(f"{'=' * 30}Questions of {file_path}{'='*30}")
+        logger.debug(questions)
         
-        logger.info(f"{'=' * 30}Generating Answers For {file_path}{'='*30}")
+        logger.debug(f"{'=' * 30}Generating Answers For {file_path}{'='*30}")
         answers = await self.get_answer(questions, text, concurrent_api_requests_num)
         answers, idxs_to_remove = answers_filter(answers)
         questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
         
-        logger.info(f"{'=' * 30}Rewriting QA Pairs{'='*30}")
+        logger.debug(f"{'=' * 30}Rewriting QA Pairs{'='*30}")
         rewrite_answers = await self.rewrite_QA(
             questions,
             answers,
@@ -78,8 +78,8 @@ class backtranslation_rewrite(Strategy):
         all_answers = []
         main_theme = config.main_theme
         file_paths = getFilePaths(config.file_folder, config.file_path, config.file_type)
-        logger.info(f"{'=' * 30}File Paths{'='*30}")
-        logger.info(file_paths)
+        logger.debug(f"{'=' * 30}File Paths{'='*30}")
+        logger.debug(file_paths)
         
         tasks = [
             self.process_single_file(
@@ -104,7 +104,7 @@ class backtranslation_rewrite(Strategy):
     async def genTitle(self,text,main_theme):
         prompt = buildMessages(
             [
-            SystemMessage(f"你是一个优秀的文本阅读助手，请根据所给文本提取若干个具有针对性的若干个小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."),
+            SystemMessage(f"你是一个优秀的文本阅读助手，请根据所给文本提取多个具有针对性的小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."),
             UserMessage(f"{text}")
             ]
         )            
@@ -236,11 +236,11 @@ class backtranslation_rewrite(Strategy):
             
             batch_answers = await self.api.async_chat(answer_prompts)
             for q,a in zip(batch_questions,batch_answers):
-                logger.info(f"{'-'*20}QA pair{'-'*20}")
-                logger.info(f"{'-'*15}Question{'-'*15}")
-                logger.info(f"{q}")
-                logger.info(f"{'-'*15}Answer{'-'*15}")
-                logger.info(f"{a}")
+                logger.debug(f"{'-'*20}QA pair{'-'*20}")
+                logger.debug(f"{'-'*15}Question{'-'*15}")
+                logger.debug(f"{q}")
+                logger.debug(f"{'-'*15}Answer{'-'*15}")
+                logger.debug(f"{a}")
             
             answers.extend(batch_answers)
         
@@ -265,11 +265,11 @@ class backtranslation_rewrite(Strategy):
             answers = await self.api.async_chat(prompts)
             new_answers.extend(answers)
             for q,a in zip(batch_questions,answers):
-                logger.info(f"{'-'*20}rewritten QA pair{'-'*20}")
-                logger.info(f"{'-'*15}Question{'-'*15}")
-                logger.info(f"{q}")
-                logger.info(f"{'-'*15}Answer{'-'*15}")
-                logger.info(f"{a}")
+                logger.debug(f"{'-'*20}rewritten QA pair{'-'*20}")
+                logger.debug(f"{'-'*15}Question{'-'*15}")
+                logger.debug(f"{q}")
+                logger.debug(f"{'-'*15}Answer{'-'*15}")
+                logger.debug(f"{a}")
 
         return new_answers
 

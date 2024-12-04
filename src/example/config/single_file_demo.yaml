@@ -1,0 +1,11 @@
+openai:
+  model: ""
+  base_url: ""
+  api_key: ""
+
+file_path: "example/dataset/Olympics.txt"
+main_theme: "巴黎奥运会"
+save_dir: "example/result"
+save_file_name: "Olympics_QA.json"
+method: "genQA"
+concurrent_api_requests_num: 1

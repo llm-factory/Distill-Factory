@@ -15,7 +15,7 @@ async def main():
     api  = API(config)
     logger = setup_logger(f"{config.save_file_name}.log")
     Method = StrategyGetter.get_strategy(config.method)(api)
-    await Method.run(config,num_question_per_title=3,concurrent_api_requests_num=config.concurrent_api_requests_num)
+    await Method.run(config,concurrent_api_requests_num=config.concurrent_api_requests_num)
     
 
 if __name__ == "__main__":

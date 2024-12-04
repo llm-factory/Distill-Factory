@@ -25,7 +25,7 @@ class genQA(Strategy):
             tasks = []
             for data in batch_datas:
                 texts= parse_data(data,config)
-                logger.info(f"texts: {texts}")
+                logger.debug(f"texts: {texts}")
                 for text in texts:
                     if(text == ""):
                         continue
@@ -38,21 +38,25 @@ class genQA(Strategy):
         return questions, answers
     
     async def process_single_data(self, config,text,file_path: str, main_theme: str, num_question_per_title: int, concurrent_api_requests_num: int,additional_info=""):
-        logger.info('='*30 + f'Text of {file_path}' + '='*30)
-        logger.info(text[:200])
-        logger.info(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
+        logger.debug('='*30 + f'Text of {file_path}' + '='*30)
+        logger.debug(text[:200])
+        logger.debug(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
         titles = await self.genTitle(text, main_theme)
-        logger.info(f"{'=' * 30}Titles of {file_path}{'='*30}")
-        logger.info(titles)
-        logger.info(f"{'=' * 30}Generating Questions For {file_path}{'='*30}")
+        logger.debug(f"{'=' * 30}Titles of {file_path}{'='*30}")
+        logger.debug(titles)
+        logger.debug(f"{'=' * 30}Splitting Titles For {file_path}{'=' * 30}")
+        titles = await self.splitTitles(titles,concurrent_api_requests_num)
+        logger.debug(f"{'=' * 30}Titles of {file_path}{'='*30}")
+        logger.debug(titles)
+        logger.debug(f"{'=' * 30}Generating Questions For {file_path}{'='*30}")
         questions = await self.generateQuestions(text, main_theme, num_question_per_title, titles, concurrent_api_requests_num=concurrent_api_requests_num,additional_info=additional_info)
         questions = questions_filter(questions)
-        logger.info(questions)
-        logger.info(f"{'=' * 30}Generating Answers For {file_path}{'='*30}")
+        logger.debug(questions)
+        logger.debug(f"{'=' * 30}Generating Answers For {file_path}{'='*30}")
         answers = await self.getAnswers(text, questions, concurrent_api_requests_num=concurrent_api_requests_num,main_theme=main_theme)
         answers, idxs_to_remove = answers_filter(answers)
         questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
-        logger.info(f"{'=' * 30}verifying QAs of {file_path}{'='*30}")
+        logger.debug(f"{'=' * 30}verifying QAs of {file_path}{'='*30}")
         questions,answers = await self.verifyQA(text,questions,answers,concurrent_api_requests_num)
         save_QA_dataset(questions,answers,config.save_dir,config.save_file_name)
         return questions, answers
@@ -83,13 +87,13 @@ class genQA(Strategy):
         return new_questions,new_answers
     
     
-    async def run(self, config, num_question_per_title=10, concurrent_api_requests_num=1):
+    async def run(self, config, num_question_per_title=5, concurrent_api_requests_num=1):
         init_QA_dataset(config.save_dir,config.save_file_name)
         all_questions = []
         all_answers = []
         file_paths = getFilePaths(config.file_folder,config.file_path,config.file_type)
-        logger.info(f"{'=' * 30}File Paths{'='*30}")
-        logger.info(file_paths)
+        logger.debug(f"{'=' * 30}File Paths{'='*30}")
+        logger.debug(file_paths)
         tasks = [
             self.process_single_file(
                 config,
@@ -114,7 +118,7 @@ class genQA(Strategy):
     async def genTitle(self,text,main_theme):
         prompt = buildMessages(
             [
-            SystemMessage(f"你是一个优秀的文本阅读助手，请根据所给文本提取若干个具有针对性的若干个小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."),
+            SystemMessage(f"你是一个优秀的文本阅读助手，请根据所给文本提取多个具有针对性的小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."),
             UserMessage(f"{text}")
             ]
         )            
@@ -165,24 +169,24 @@ class genQA(Strategy):
             for i in range(len(batch_titles)):
                 prompt = buildMessages(
                     [
-                        SystemMessage(f"你是一位对{main_theme}感兴趣的AI助手。请根据以下内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'。您的问题需包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
+                        SystemMessage(f"你是一位对{main_theme}感兴趣的AI助手。请根据以下文本内容指向'{main_theme}'提出{num_question_per_title}个您感兴趣的，在不同场景下与“{batch_titles[i]}”有关的问题。问题必须指向'{batch_titles[i]}'且可以在文本中找到答案。您的问题需包含完整名称，事件等完整信息以避免模糊，严禁使用简称。"),
                         UserMessage(
                             f"文本:{text}\n每个问题一行，以数字加'. '开始，不能重复。"
                         ),                        
                     ]
                 )
-                logger.info(f"{'-'*20}Prompt of {batch_titles[i]}{'-'*20}")
-                logger.info(prompt)
+                logger.debug(f"{'-'*20}Prompt of {batch_titles[i]}{'-'*20}")
+                logger.debug(prompt)
                 prompts.append(prompt)
             genQuestions = await self.api.async_chat(prompts)
-            logger.info(f"{'-' * 20}Questions of {batch_titles[i]}{'-'*20}")
-            logger.info(genQuestions)
+            logger.debug(f"{'-' * 20}Questions of {batch_titles[i]}{'-'*20}")
+            logger.debug(genQuestions)
             genQuestions = clean_and_split_reply_list(genQuestions)
             questions.extend(genQuestions)
         return questions
     
     async def getAnswers(self, text,questions,concurrent_api_requests_num=1,main_theme=""):
-        logger.info("======================Generating Answers======================")
+        logger.debug("======================Generating Answers======================")
         answers = []
         for idx in tqdm(range(0,len(questions),concurrent_api_requests_num),desc="Generating answers"):
             batch_questions = questions[idx:idx+concurrent_api_requests_num]
@@ -200,10 +204,10 @@ class genQA(Strategy):
             
             genAnswers = await self.api.async_chat(prompts)
             for q,a in zip(batch_questions,genAnswers):
-                logger.info(f"{'-'*20}QA pair{'-'*20}")
-                logger.info(f"{'-'*15}Question{'-'*15}")
-                logger.info(f"{q}")
-                logger.info(f"{'-'*15}Answer{'-'*15}")
-                logger.info(f"{a}")
+                logger.debug(f"{'-'*20}QA pair{'-'*20}")
+                logger.debug(f"{'-'*15}Question{'-'*15}")
+                logger.debug(f"{q}")
+                logger.debug(f"{'-'*15}Answer{'-'*15}")
+                logger.debug(f"{a}")
             answers.extend(genAnswers)
         return answers

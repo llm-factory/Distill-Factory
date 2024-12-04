@@ -15,19 +15,17 @@ pip install -r requirements.txt
 配置文件示例：
 
 ```yaml
-# config.yaml
 openai:
-  model: ""      # OpenAI 模型名称
-  base_url: ""   # API 基础URL
-  api_key: ""    # OpenAI API密钥
-
-save_dir: "./example"                # 生成数据集保存目录
-file_path: "./example/Olympics.txt" # 文件源地址
-main_theme: "巴黎奥运会"              # 文本主题
-concurrent_api_requests_num: 4       # api异步请求数
-method: "genQA"                      # 数据生成方式
-file_folder: "../../LLaMA-Factory-Doc" # 文件夹路径
-file_type: rst                         # 文件类型
+  model: ""      # 所使用模型的名称
+  base_url: ""   # API URL
+  api_key: ""    # API 密钥
+  
+file_path: "" # 输入文本的路径
+main_theme: "" # 文本主题
+save_dir: ""     # 生成数据集的保存目录
+save_file_name: "" # 生成问答数据集的文件名
+concurrent_api_requests_num: 1 # api异步请求数
+method: "" # 数据生成方式
 ```
 
 > [!NOTE]
@@ -35,32 +33,37 @@ file_type: rst                         # 文件类型
 > 
 > 开源模型推荐使用 [imitater](https://github.com/the-seeds/imitater) 接入。
 
+
+
 ### 参数说明
 
-| 参数名                      | 参数介绍                                   | 默认值                   |
-| --------------------------- | ------------------------------------------ | ------------------------ |
-| openai.model                | API 模型名称                                | \                      |
-| openai.base_url             | API URL地址                                 | \                      |
-| openai.api_key              | API密钥                                    | \                      |
-| save_dir                    | 生成的数据集保存目录                       | "./example"              |
-| file_path                   | 源文件路径，用于单文件处理                 | \ |
-| file_folder               |文件夹路径，用于批量处理多个文件| \           |
-| file_type       |  要处理的文件类型|txt|
-| main_theme                  | 文本主题，用于生成相关问题                 | \                |
-| concurrent_api_requests_num | API并发请求数量       | 4                        |
-| method                      | 数据生成方式 | "genQA" |
-| save_file_name    | 文件保存名，如'dataset.json'|"dataset.json"|
-| is_structure_data | 是否是结构化 json 数据，是则按照text_template读取文本，否则直接读入纯文本|False|
-| text_template     | 从 json 格式构造生成问题所需文本的模板。如"【标题】: {msg_title}\n【来源】: {msg_source}\n【时间】: {msg_date}\n【内容】: {msg_context}\n"| \ |
+| 参数名                      | 参数介绍                                                     | 默认值       |
+| --------------------------- | ------------------------------------------------------------ | ------------ |
+| openai.model                | API 模型名称                                                 | \            |
+| openai.base_url             | API URL地址                                                  | \            |
+| openai.api_key              | API密钥                                                      | \            |
+| save_dir                    | 生成的数据集保存目录                                         | example/     |
+| file_path                   | 输入文本路径                                                 | \            |
+| file_folder                 | 输入文件夹路径                                               | \            |
+| file_type                   | 输入文件夹中要处理的文件类型，多个类型用空格分隔             | txt          |
+| main_theme                  | 文本主题                                                     | \            |
+| concurrent_api_requests_num | API并发请求数量                                              | 4            |
+| method                      | 数据生成方式                                                 | genQA        |
+| save_file_name              | 生成问答数据集的文件名                                       | dataset.json |
+| is_structure_data           | 是否是结构化 JSON 数据，是则按照text_template读取文本，否则直接读入纯文本 | False        |
+| text_template               | 从 JSON 格式数据构造生成问题所需文本的模板。                 | \            |
 
 > 输入纯文本时请设置 is_structure_data 为 False。
 >
-> 设置 is_structure_data 为 True 时请确保数据包含 text_template 中对应的键。
+> 设置 is_structure_data 为 True 时请确保 JSON 格式数据包含 text_template 中对应的键。
 >
+> 设置 file_folder 会将 file_path 覆盖。
+
+
 
 ### 数据格式
 
-生成数据默认以 `alpaca` 格式保存，如：
+工具所生成的问答数据集默认以 `alpaca` 格式保存，如：
 
 ```json
 {
@@ -76,54 +79,141 @@ file_type: rst                         # 文件类型
 
 ##### 单文件处理
 
-在 `config.yaml` 中配置 `file_path` 指向单个文件，运行工具生成数据集。
+如果您希望使用单个文件（如一篇新闻报道）生成问答数据集，您需要指定输入文本的路径 `file_path`，文本主题 `main_theme` 等设置。
+
+**示例配置文件：**
 
 ```yaml
-file_path: "./example/Olympics.txt"
-main_theme: "巴黎奥运会"
-save_dir: "dataset/"
-save_file_name: "test.json"
-# 文件将会被保存在 dataset/test.json中
+openai:
+  model: ""      # 所使用模型的名称
+  base_url: ""   # API URL
+  api_key: ""    # API 密钥
+  
+file_path: "" # 输入文本的路径
+main_theme: "" # 文本主题
+save_dir: ""     # 生成数据集的保存目录
+save_file_name: "" # 生成问答数据集的文件名
+concurrent_api_requests_num: 1 # api异步请求数
+method: "" # 数据生成方式
 ```
 
------
+您可以通过在示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+
+`python main.py example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集。
+
+```yaml
+### example/config/single_file_demo.yaml
+openai:
+  model: ""
+  base_url: ""
+  api_key: ""
+
+file_path: "example/dataset/Olympics.txt"
+main_theme: "巴黎奥运会"
+save_dir: "example/result"
+save_file_name: "Olympics_QA.json"
+method: "genQA"
+concurrent_api_requests_num: 1
+```
+
+------
 
 ##### 多文件处理
 
-如果需要批量处理多个文件，可以指定 `file_folder` 和 `file_type`。
+如果您需要从多个文件中生成问答数据集（例如处理一批文档、小说等），您需要指定输入文件夹的路径 `file_folder` 以及您希望处理的文件类型 `file_type` 。
+
+**示例配置文件：**
 
 ```yaml
-file_folder: "./example_docs"
-file_type: "rst txt md" # 意味着rst,txt,md文件会被读取
+openai:
+  model: ""      # 所使用模型的名称
+  base_url: ""   # API URL
+  api_key: ""    # API 密钥
+  
+file_folder: "" # 输入文件夹的路径
+file_type: "" # 输入文件夹中要处理的文件类型
+main_theme: "" # 文本主题
+save_dir: ""     # 生成数据集的保存目录
+save_file_name: "" # 生成问答数据集的文件名
+concurrent_api_requests_num: 1 # api异步请求数
+method: "" # 数据生成方式
 ```
 
------
 
-##### 文本读取
 
-`file_path` 和 `file_folder` 中的文本将被用于数据生成。若不指定 `is_structure_data` 与 `text_template` ，工具会默认以纯文本方式读取文件内容（包括 JSON 文件）。 
+您可以通过在示例文件 `example/config/multi_file_demo.yaml` 中填入 API 相关配置并且运行指令：
 
-若指定`is_structure_data` 与 `text_template`  工具会根据模板解析文件内容读取文本。
-
-以下是一个示例：
+`python main.py example/config/multi_file_demo.yaml ` 以尝试使用多个文件生成问答数据集。
 
 ```yaml
-is_structure_data: true
-text_template: "【标题】: {msg_title}\n【来源】: {msg_source}\n【时间】: {msg_date}\n【内容】: {msg_context}\n"
+### example/config/multi_file_demo.yaml
+openai:
+  model: ""
+  base_url: "" 
+  api_key: ""
+
+file_folder: "example/LLaMA-Factory-Doc" # 输入文件夹的路径
+file_type: "rst md" # 意味着 example/LLaMA-Factory-Doc 文件夹下所有的 rst 与 md 格式的文件都会被用于生成问答数据集
+main_theme: "LLaMA-Factory使用文档"
+save_dir: "example/result"
+save_file_name: "docs_QA.json"
+method: "genQA"
+concurrent_api_requests_num: 1
 ```
 
-假设文件内容为以下 json 格式数据：
+
+
+----
+
+##### JSON文件处理
+
+默认情况下，工具会将所有输入文件视为纯文本。如果输入文件是 JSON 格式，您需要将 `is_structure_data` 设置为 `True`，并定义 `text_template` 模板，用于从 JSON 数据中提取信息并以所需格式生成文本。
+
+**配置文件示例：**
+
+在配置文件中，您需要设置 `is_structure_data: True` 来指定输入文件为 JSON 数据，并提供 `text_template`，以便从 JSON 格式的数据中提取所需的字段以组成输入文本。
+
+您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+
+`python main.py example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。
+
+```yaml
+### example/config/json_file_demo.yaml
+openai:
+  model: ""      
+  base_url: ""   
+  api_key: ""
+
+file_path: "/example/dataset/dataset.json"
+main_theme: "地理科普"
+save_dir: "../example/result"
+save_file_name: "jsonfile_demo_QA.json"
+concurrent_api_requests_num: 1
+method: "genQA"
+is_structure_data: True  # 表示输入文件是结构化数据
+text_template: "【标题】: {title}\n【来源】: {source}\n【时间】: {date}\n【内容】: {content}\n"  # JSON 数据的格式模板
+```
+
+>[!TIP]
+>
+>同样，您也可以指定 `file_folder` 和 `file_type` 以使用多个 JSON 格式文件生成问答数据集。
+
+
+
+**JSON 文件数据示例**
+
+假设输入的 JSON 文件内容如下：
 
 ```json
 {
-  "msg_date": "2024-01-01",
-  "msg_title": "会议通知",
-  "msg_source":"C先生",
-  "msg_context": "今天上午11:00在A楼B会议室召开会议，请准时到达。"
+  "date": "2024-01-01",
+  "title": "会议通知",
+  "source": "C先生",
+  "content": "今天上午11:00在A楼B会议室召开会议，请准时到达。"
 }
 ```
 
-根据 `text_template` ，工具会将 json 格式数据解析为以下文本：
+根据上述 `text_template` 模板，工具会将 JSON 格式数据解析并转换为以下文本：
 
 ```
 【标题】: 会议通知
@@ -132,13 +222,7 @@ text_template: "【标题】: {msg_title}\n【来源】: {msg_source}\n【时间
 【内容】: 今天上午11:00在A楼B会议室召开会议，请准时到达。
 ```
 
-##### 项目运行
 
-项目运行只需在 `src` 文件夹下执行命令：
-
-```bash
-python main.py config.yaml
-```
 
 #### WebUI
 
