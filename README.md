@@ -1,31 +1,39 @@
-# DatasetGenerator
+# LlamaFeeder
+
 ## 使用步骤
 
 ### 安装
 
 ```bash
-git clone https://github.com/the-seeds/DatasetGenerator.git
-cd DatasetGenerator
+git clone https://github.com/the-seeds/LlamaFeeder.git
+cd LlamaFeeder
 pip install -r requirements.txt
 ```
 
 ### 配置文件
 
-配置文件示例:
+配置文件示例：
+
 ```yaml
 # config.yaml
 openai:
   model: ""      # OpenAI 模型名称
   base_url: ""   # API 基础URL
   api_key: ""    # OpenAI API密钥
-save_dir: "./example"              # 生成数据集保存目录
+
+save_dir: "./example"                # 生成数据集保存目录
 file_path: "./example/Olympics.txt" # 文件源地址
-main_theme: "巴黎奥运会"           # 文本主题
-concurrent_api_requests_num: 4      # api异步请求数
-method: "genQA"                    # 数据生成方式
+main_theme: "巴黎奥运会"              # 文本主题
+concurrent_api_requests_num: 4       # api异步请求数
+method: "genQA"                      # 数据生成方式
 file_folder: "../../LLaMA-Factory-Doc" # 文件夹路径
 file_type: rst                         # 文件类型
 ```
+
+> [!NOTE]
+> 闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
+> 
+> 开源模型推荐使用 [imitater](https://github.com/the-seeds/imitater) 接入。
 
 ### 参数说明
 
@@ -36,21 +44,19 @@ file_type: rst                         # 文件类型
 | openai.api_key              | API密钥                                    | \                      |
 | save_dir                    | 生成的数据集保存目录                       | "./example"              |
 | file_path                   | 源文件路径，用于单文件处理                 | \ |
-|file_folder|文件夹路径，用于批量处理多个文件| \           |
-|file_type|要处理的文件类型|txt|
+| file_folder               |文件夹路径，用于批量处理多个文件| \           |
+| file_type       |  要处理的文件类型|txt|
 | main_theme                  | 文本主题，用于生成相关问题                 | \                |
 | concurrent_api_requests_num | API并发请求数量       | 4                        |
 | method                      | 数据生成方式 | "genQA" |
-|save_file_name|文件保存名，如'dataset.json'|"dataset.json"|
-|is_structure_data|是否是结构化 json 数据，是则按照text_template读取文本，否则直接读入纯文本|False|
-|text_template|从 json 格式构造生成问题所需文本的模板。如"【标题】: {msg_title}\n【来源】: {msg_source}\n【时间】: {msg_date}\n【内容】: {msg_context}\n"| \ |
+| save_file_name    | 文件保存名，如'dataset.json'|"dataset.json"|
+| is_structure_data | 是否是结构化 json 数据，是则按照text_template读取文本，否则直接读入纯文本|False|
+| text_template     | 从 json 格式构造生成问题所需文本的模板。如"【标题】: {msg_title}\n【来源】: {msg_source}\n【时间】: {msg_date}\n【内容】: {msg_context}\n"| \ |
 
 > 输入纯文本时请设置 is_structure_data 为 False。
 >
 > 设置 is_structure_data 为 True 时请确保数据包含 text_template 中对应的键。
 >
-
-
 
 ### 数据格式
 
@@ -58,9 +64,9 @@ file_type: rst                         # 文件类型
 
 ```json
 {
-    "instruction":"中国的首都是什么？",
-    "input":"",
-    "output":"中国的首都是北京。"
+    "instruction": "中国的首都是哪里？",
+    "input": "",
+    "output": "中国的首都是北京。"
 }
 ```
 
@@ -80,7 +86,7 @@ save_file_name: "test.json"
 # 文件将会被保存在 dataset/test.json中
 ```
 
-------
+-----
 
 ##### 多文件处理
 
@@ -88,10 +94,10 @@ save_file_name: "test.json"
 
 ```yaml
 file_folder: "./example_docs"
-file_type: "rst txt md" #意味着rst,txt,md文件会被读取y
+file_type: "rst txt md" # 意味着rst,txt,md文件会被读取
 ```
 
-----
+-----
 
 ##### 文本读取
 
@@ -133,8 +139,6 @@ text_template: "【标题】: {msg_title}\n【来源】: {msg_source}\n【时间
 ```bash
 python main.py config.yaml
 ```
-
-
 
 #### WebUI
 
