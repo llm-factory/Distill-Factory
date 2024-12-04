@@ -1,5 +1,4 @@
 __pycache__/
 config.yaml
-example/
-output.log
+*.log
 .gradio
