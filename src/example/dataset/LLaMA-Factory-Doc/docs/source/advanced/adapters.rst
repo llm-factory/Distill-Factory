@@ -8,7 +8,7 @@ LLaMA-Factory 支持多种调优算法，包括： :ref:`Full Parameter Fine-tun
 .. _full:
 
 Full Parameter Fine-tuning
---------------------
+--------------------------------
 全参微调指的是在训练过程中对于预训练模型的所有权重都进行更新，但其对显存的要求是巨大的。
 
 .. 以 <TODO> 为例子

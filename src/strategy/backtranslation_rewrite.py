@@ -45,9 +45,9 @@ class backtranslation_rewrite(Strategy):
         logger.debug(text[:200])
         
         logger.debug(f"{'=' * 30}Generating Titles For {file_path}{'=' * 30}")
-        titles = await self.genTitle(text, main_theme)
+        genTitles = await self.genTitle(text, main_theme)
         logger.debug(f"{'=' * 30}Splitting Titles For {file_path}{'=' * 30}")
-        titles = await self.splitTitles(titles, concurrent_api_requests_num)
+        titles = await self.splitTitles(genTitles, concurrent_api_requests_num)
         logger.debug(f"{'=' * 30}Titles of {file_path}{'='*30}")
         logger.debug(titles)
         
@@ -103,10 +103,10 @@ class backtranslation_rewrite(Strategy):
 
     async def genTitle(self,text,main_theme):
         prompt = buildMessages(
-            [
+            
             SystemMessage(f"你是一个优秀的文本阅读助手，请根据所给文本提取多个具有针对性的小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."),
             UserMessage(f"{text}")
-            ]
+            
         )            
         titles = await self.api.async_chat([prompt])
         titles = clean_and_split_title_list(titles)
@@ -118,14 +118,14 @@ class backtranslation_rewrite(Strategy):
             batch_titles = titles[idx:idx+concurrent_api_requests_num]
             prompts = []
             for i in range(len(batch_titles)):
-                prompt = buildMessages([
+                prompt = buildMessages(
                     SystemMessage(
                         "你是一个擅长划分标题的助手。以下是一个标题,该标题可能包含多个事实，不够简洁。对于包含多个事实的标题你需要将该标题划分为多个小标题,每个小标题要包含原标题中的核心信息和一部分有效信息，不能改变原意，每个小标题一行，不输出额外信息。对于已经足够简洁的标题，则输出原标题。"    
                     ),
                     UserMessage(
                         f"""标题: {batch_titles[i]}\n 只输出划分后的小标题或者原标题,不输出任何额外信息。"""
                     )
-                ])
+                )
                 prompts.append(prompt)
             titles = await self.api.async_chat(prompts)
             titles = clean_and_split_title_list(titles)
@@ -145,7 +145,7 @@ class backtranslation_rewrite(Strategy):
             
             for title in batch_titles:
                 prompt = buildMessages(
-                    [
+                    
                     UserMessage(f"""
     作为一个AI阅读理解助手，你将在下列给定文本中，提取5条与给定标题相关的关键信息
     文本: {text}
@@ -154,7 +154,7 @@ class backtranslation_rewrite(Strategy):
     1.每条关键信息必须与标题{title}相关，包含标题{title}相关的信息。每条关键信息一行。
     2.每条关键信息必须包括{main_theme}相关字样。"""
     )
-                    ]
+                    
     )
                 batch_prompts.append(prompt)
             batch_extractions = await self.api.async_chat(batch_prompts)            
@@ -173,13 +173,13 @@ class backtranslation_rewrite(Strategy):
                     
                     for extraction in batch_extractions:
                         prompt = buildMessages(
-                        [
+                        
                             UserMessage(f"""
     请基于以下事实，生成3个清晰且能够依据该事实清晰正确回答的问题。
     事实:{extraction}
     每个问题占一行。禁止使用模糊的指代词(如"这个","那个","它",'这次','这天'等)。问题必须包含事实中的关键细节以及关键信息（如具体的名称、时间、地点、事件等），以避免提问模糊或不清晰。"""
                         )
-                        ]
+                        
                         )
                         question_prompts.append(prompt)
                     batch_gen_questions = await self.api.async_chat(question_prompts)
@@ -190,7 +190,7 @@ class backtranslation_rewrite(Strategy):
                             batch_questions = gen_questions[q_idx:q_idx+concurrent_api_requests_num]
                             validation_prompts = []
                             for q in batch_questions:
-                                prompt = buildMessages([
+                                prompt = buildMessages(
                                     UserMessage(f"""
     请判断下列问题是否是无效提问，无效提问的特征如下：
     1.非疑问句，包含提问以外的答案、回答、转述原文、错误信息、自言自语、道歉等无意义信息。
@@ -201,7 +201,7 @@ class backtranslation_rewrite(Strategy):
     问题:{q}
     请先给出简要的打分理由，然后在最后一行输出判断'【无效】'或'【有效】'"""
                                 )
-                                ]
+                                
                                                     )
                                 validation_prompts.append(prompt)
                             
@@ -226,13 +226,13 @@ class backtranslation_rewrite(Strategy):
 
             answer_prompts = []
             for question in batch_questions:
-                answer_prompts.append(buildMessages([
+                answer_prompts.append(buildMessages(
                     SystemMessage("你是一个AI对话助手，你擅长从文本中提取信息并且高质量地回答人们的问题。"),
                     UserMessage(f"""文本：{text} 问题:\n{question}
     请根据文本回答问题。
     注意：如果问题指代不明，例如包含('这','他','那次'等)代词，或无法从文本获取答案，则输出"无法回答"。
     回答中不要出现'根据文本'，'文本提到','文本中'等字样。""")
-                ]))
+                ))
             
             batch_answers = await self.api.async_chat(answer_prompts)
             for q,a in zip(batch_questions,batch_answers):
@@ -254,13 +254,13 @@ class backtranslation_rewrite(Strategy):
             batch_questions = questions[data_idx:data_idx+concurrent_api_requests_num]
             prompts = []
             for q in batch_questions:       
-                message = buildMessages([
+                message = buildMessages(
                     SystemMessage("你是一个擅长阅读文本，回答人类问题的AI助手,请回答以下用户提问。"),
                     UserMessage(f"""文本：{text}
     问题：{q}
     请根据所给文本高质量地回答上述问题，回答应正确、通顺、清晰，据有深度。不应出现"根据文本","文本中"等字眼。"""
                     )
-                ])
+                )
                 prompts.append(message)
             answers = await self.api.async_chat(prompts)
             new_answers.extend(answers)

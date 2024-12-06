@@ -50,9 +50,9 @@ class FunctionAvailable(BaseModel):
     type: Literal["function"] = "function"
 
 
-def buildMessages(messages: List[Union[SystemMessage, UserMessage, AssistantMessage, ToolMessage]]) -> List[Dict[str,str]]:
+def buildMessages(*messages: Union[SystemMessage, UserMessage, AssistantMessage, ToolMessage]) -> List[Dict[str,str]]:
     newMessages = []
     for message in messages:
-        Message = {"role": message.role, "content": message.content}
-        newMessages.append(Message)
+        msg = {"role": message.role, "content": message.content}
+        newMessages.append(msg)
     return newMessages

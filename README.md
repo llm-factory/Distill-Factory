@@ -61,18 +61,6 @@ method: "" # 数据生成方式
 
 
 
-### 数据格式
-
-工具所生成的问答数据集默认以 `alpaca` 格式保存，如：
-
-```json
-{
-    "instruction": "中国的首都是哪里？",
-    "input": "",
-    "output": "中国的首都是北京。"
-}
-```
-
 ### 使用方式
 
 #### 命令行
@@ -97,7 +85,7 @@ concurrent_api_requests_num: 1 # api异步请求数
 method: "" # 数据生成方式
 ```
 
-您可以通过在示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+您可以通过在以下示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并且运行指令：
 
 `python main.py example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集。
 
@@ -111,10 +99,30 @@ openai:
 file_path: "example/dataset/Olympics.txt"
 main_theme: "巴黎奥运会"
 save_dir: "example/result"
-save_file_name: "Olympics_QA.json"
+save_file_name: "single_file_demo_QA.json"
 method: "genQA"
 concurrent_api_requests_num: 1
 ```
+
+运行后，应能在终端或者日志文件 `output.log` 中观察到日志文件，如：所处理的文件路径，生成的问答对等内容。
+
+![image-20241207010109514](assets/image-20241207010109514.png)
+
+![image-20241207011016439](assets/image-20241207011016439.png)
+
+工具所生成的问答会以 `alpaca `格式分批写入配置文件中的数据保存路径
+
+![image-20241207010255266](assets/image-20241207010255266.png)
+
+此时应该能够在数据保存路径找到所生成的问答数据集，您可以观察生成效果。若对生成效果不满意也可在 `strategy/{method}.py` 文件内修改prompt等参数或更换生成方式。
+
+![image-20241207010715827](assets/image-20241207010715827.png)
+
+除单文件处理外，该工具还支持 [多文件处理](#多文件处理) 与 [JSON 文件处理](#JSON文件处理)
+
+
+
+
 
 ------
 
@@ -149,14 +157,14 @@ method: "" # 数据生成方式
 ### example/config/multi_file_demo.yaml
 openai:
   model: ""
-  base_url: "" 
+  base_url: ""
   api_key: ""
 
-file_folder: "example/LLaMA-Factory-Doc" # 输入文件夹的路径
-file_type: "rst md" # 意味着 example/LLaMA-Factory-Doc 文件夹下所有的 rst 与 md 格式的文件都会被用于生成问答数据集
+file_folder: "example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
+file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
 main_theme: "LLaMA-Factory使用文档"
 save_dir: "example/result"
-save_file_name: "docs_QA.json"
+save_file_name: "multi_file_demo_QA.json"
 method: "genQA"
 concurrent_api_requests_num: 1
 ```
@@ -167,27 +175,50 @@ concurrent_api_requests_num: 1
 
 ##### JSON文件处理
 
-默认情况下，工具会将所有输入文件视为纯文本。如果输入文件是 JSON 格式，您需要将 `is_structure_data` 设置为 `True`，并定义 `text_template` 模板，用于从 JSON 数据中提取信息并以所需格式生成文本。
+默认情况下，工具会将所有输入文件视为纯文本。如果输入文件是 JSON 格式（例如如下所示的数据结构）：
 
-**配置文件示例：**
+```json
+{
+  "date": "2024-01-01",
+  "title": "会议通知",
+  "source": "C先生",
+  "content": "今天上午11:00在A楼B会议室召开会议，请准时到达。"
+},
+{
+    ...
+}
+```
 
-在配置文件中，您需要设置 `is_structure_data: True` 来指定输入文件为 JSON 数据，并提供 `text_template`，以便从 JSON 格式的数据中提取所需的字段以组成输入文本。
+您需要将 `is_structure_data` 设置为 `True`，并定义 `text_template` 模板以便从 JSON 数据中提取信息并以所需格式生成文本。
 
-您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+假设您希望将上述 JSON 数据转化为以下格式作为模型的输入：
+
+```
+【标题】: 会议通知
+【来源】: C先生
+【时间】: 2024-01-01
+【内容】: 今天上午11:00在A楼B会议室召开会议，请准时到达。
+```
+
+您需要在配置文件中将 `is_structure_data` 设置为 `True`，并定义 `text_template`为：` "【标题】: {title}\n【来源】: {source}\n【时间】: {date}\n【内容】: {content}\n" `
+
+**完整配置文件示例：**
+
+以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且运行指令：
 
 `python main.py example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。
 
 ```yaml
 ### example/config/json_file_demo.yaml
 openai:
-  model: ""      
-  base_url: ""   
+  model: ""
+  base_url: ""
   api_key: ""
 
-file_path: "/example/dataset/dataset.json"
+file_path: "example/dataset/dataset.json"
 main_theme: "地理科普"
-save_dir: "../example/result"
-save_file_name: "jsonfile_demo_QA.json"
+save_dir: "example/result"
+save_file_name: "json_file_demo_QA.json"
 concurrent_api_requests_num: 1
 method: "genQA"
 is_structure_data: True  # 表示输入文件是结构化数据
@@ -197,30 +228,6 @@ text_template: "【标题】: {title}\n【来源】: {source}\n【时间】: {da
 >[!TIP]
 >
 >同样，您也可以指定 `file_folder` 和 `file_type` 以使用多个 JSON 格式文件生成问答数据集。
-
-
-
-**JSON 文件数据示例**
-
-假设输入的 JSON 文件内容如下：
-
-```json
-{
-  "date": "2024-01-01",
-  "title": "会议通知",
-  "source": "C先生",
-  "content": "今天上午11:00在A楼B会议室召开会议，请准时到达。"
-}
-```
-
-根据上述 `text_template` 模板，工具会将 JSON 格式数据解析并转换为以下文本：
-
-```
-【标题】: 会议通知
-【来源】: C先生
-【时间】: 2024-01-01
-【内容】: 今天上午11:00在A楼B会议室召开会议，请准时到达。
-```
 
 
 
@@ -240,8 +247,14 @@ python webui.py
 
 ##### 使用
 
-若您已配置好配置文件，可直接输入配置文件路径载入并进行修改。此外您也可以直接在 WebUI 界面直接进行文件配置。
+若您已配置好配置文件，可直接输入配置文件路径后回车。您应当可以看到各个配置项正常导入。导入配置文件后，您可以根据在 WebUI 根据需求修改配置，例如更改文件保存路径，文件保存名等。
 
-![image-20241129181618047](assets/image-20241129181618047.png)
+![image-20241207002347109](assets/image-20241207002347109.png)
 
-配置完成后，点击 `Run` 按钮便可开始生成数据。
+配置完成并确认无误后，点击 `Run` 按钮便可开始生成数据。
+
+![image-20241207004535485](assets/image-20241207004535485.png)
+
+若可以看到跳出成功提示，并可观察到输出文本框日志便说明启动成功。
+
+![image-20241207005504226](assets/image-20241207005504226.png)

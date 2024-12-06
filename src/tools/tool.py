@@ -90,7 +90,7 @@ def clean_and_split_titles(titles:str)-> List[str]:
     titles = [re.sub(r'^[ :：\.、]?(\d+)[ :：\.、]', '', l) for l in titles]
     titles = [re.sub(r'^([小]?标题)[ :：\.、\d]?', '', l) for l in titles]
     titles = [l.strip() for l in titles]
-    titles = [l for l in titles if len(l) >= 3]
+    titles = [l for l in titles if len(l) >=3]
     return titles
 
 def clean_and_split_title_list(titlelist:List[str])->List[str]:

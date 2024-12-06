@@ -73,48 +73,13 @@ vllm推理框架
 批量推理
 -------------------------
 
-数据集
-~~~~~~~~~~~~~~~~~~~~~~~
-使用数据集批量推理时，您需要指定模型、适配器（可选）、评估数据集、输出路径等信息并且指定 ``do_predict`` 为 ``true``。
-下面提供一个 **示例**,您可以通过 ``llamafactory-cli train examples/train_lora/llama3_lora_predict.yaml`` 使用数据集进行批量推理。
 
-如果您需要多卡推理，则需要在配置文件中指定 ``deepspeed`` 参数。
+vllm
+~~~~~~~~~~~~~~~~~~~~~~~
+您可以使用以下指令启动 vllm 推理框架对数据集进行批量推理：
 
 .. code-block:: yaml
-
-    # examples/train_lora/llama3_lora_predict.yaml
-    ### model
-    model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-    adapter_name_or_path: saves/llama3-8b/lora/sft
-    
-    deepspeed: examples/deepspeed/ds_z3_config.yaml # deepspeed配置文件
-    
-    ### method
-    stage: sft
-    do_predict: true
-    finetuning_type: lora
-
-    ### dataset
-    eval_dataset: identity,alpaca_en_demo
-    template: llama3
-    cutoff_len: 1024
-    max_samples: 50
-    overwrite_cache: true
-    preprocessing_num_workers: 16
-
-    ### output
-    output_dir: saves/llama3-8b/lora/predict
-    overwrite_output_dir: true
-
-    ### eval
-    per_device_eval_batch_size: 1
-    predict_with_generate: true
-    ddp_timeout: 180000000
-
-.. note::
-
-    只有 ``stage`` 为 ``sft`` 的时候才可设置 ``predict_with_generate`` 为 ``true``
-
+    python scripts/vllm_infer.py --model_name_or_path path_to_merged_model --dataset alpaca_en_demo
 
 api
 ~~~~~~~~~~~~~~~~~

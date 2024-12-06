@@ -5,13 +5,14 @@ import gradio as gr
 from model.config import Config
 from api.api import API
 from strategy.getter import StrategyGetter
-from log.logger import setup_logger,flush_logger
-
+from log.logger import Logger
+import time
 class WebUI:
     def __init__(self):
         self.config = None
         self.api = None
-        self.logger = setup_logger("output.log")
+        self.logger = Logger()
+        self.loggerName = self.logger.getName()
         
  
     def load_config_from_file(self, config_path):
@@ -23,7 +24,7 @@ class WebUI:
             return None
 
     def read_from_logs(self):
-        with open("output.log", "r", encoding="utf-8") as f:
+        with open(self.loggerName, "r", encoding="utf-8") as f:
             logs = f.read()
         return logs
     
@@ -68,9 +69,9 @@ class WebUI:
                                        )
                     save_dir = gr.Textbox(label="Save Dir", info="保存文件目录",
                                        max_lines=1)
-                    file_path = gr.Textbox(label="File Path", info="文件源路径",
+                    file_path = gr.Textbox(label="File Path", info="输入文本路径",
                                        max_lines=1)
-                    file_folder = gr.Textbox(label="File Folder", info="文件源目录",
+                    file_folder = gr.Textbox(label="File Folder", info="输入文件夹路径",
                                        max_lines=1)
                     
                     file_name = gr.Textbox(label="File Name", 
@@ -155,8 +156,10 @@ class WebUI:
                             "text_template": text_template
                         }
                         self.config = Config(config_dict=config_dict)
+                        gr.Info(f"配置已载入")
                         self.api = API(self.config)
                         Method = StrategyGetter.get_strategy(self.config.method)(self.api)
+                        gr.Info(f"开始生成数据")
                         questions, answers = await Method.run(
                             config=self.config,
                             num_question_per_title=3,
