@@ -116,13 +116,11 @@ concurrent_api_requests_num: 1
 
 ![image-20241207010255266](assets/image-20241207010255266.png)
 
-此时应该能够在数据保存路径找到所生成的问答数据集，您可以观察生成效果。若对生成效果不满意也可在 `strategy/{method}.py` 文件内修改prompt等参数或更换生成方式。
+此时应该能够在 `example/result` 目录下找到所生成的问答数据集 `single_file_demo_QA.json` 。
 
 ![image-20241207010715827](assets/image-20241207010715827.png)
 
 除单文件处理外，该工具还支持 [多文件处理](#多文件处理) 与 [JSON 文件处理](#JSON文件处理)
-
-
 
 
 
