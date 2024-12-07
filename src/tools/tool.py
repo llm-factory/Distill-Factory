@@ -78,12 +78,30 @@ def clean_and_split_reply(lines:str)-> List[str]:
     lines = [l for l in lines if len(l) > 10]
     return lines
 
-def clean_and_split_reply_list(replys:List[str])-> List[str]:
+def clean_and_split_reply_list(replies:List[str])-> List[str]:
     cleaned =[]
-    for reply in replys: 
+    for reply in replies: 
         reply = clean_and_split_reply(reply)
         cleaned.extend(reply)
     return cleaned
+
+def clean_and_split_question_list(replies:List[str])-> List[str]:
+    cleaned = []
+    pattern = r'问题[\d]+::(.*?)(?=问题[\d]+::|$)'
+    for reply in replies:
+        matches = re.finditer(pattern, reply, re.DOTALL)
+        matches_list = list(matches)
+        questions = []
+        for match in matches_list:
+            logger.error(f"match: {match}") 
+            print("group1:",match.group(1))
+            question = match.group(1).strip()
+            if question:
+                questions.append(question)
+        cleaned.extend(questions)
+        
+    return cleaned
+        
 
 def clean_and_split_titles(titles:str)-> List[str]:
     titles = titles.split('\n')

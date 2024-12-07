@@ -71,23 +71,25 @@ class genQA(Strategy):
             for q,a in zip(batch_questions,batch_answers):
                 prompt = buildMessages(
                         SystemMessage(
-                            "你的任务是根据提供的文本，判断给定的问答是否“有效”。\n"
-                            "有效的条件包括：\n"
-                            f"1. 问题合理：问题在逻辑上清晰，不混乱，符合人类习惯，并且与文本主题 {main_theme} 相关。\n" 
-                            "2. 答案正确：答案可由文本信息支持，与问题所问内容相符，不包含'根据文本内容'等字眼。\n"
-                            "若符合上述两个条件，则回答“有效”；如果任一条件不满足，则回答“无效”。\n"
-                            "只输出'有效'或'无效'，不得输出其他信息。"
+                            "你需要根据提供的文本，判断给定的问答是否“有效”。\n"
+                            "有效的问答的标准是：\n"
+                            f"问题合理。问题与文本主题 {main_theme} 相关，逻辑清晰，不混乱，符合人类习惯。问题中不包含回答等无关信息。\n" 
+                            "问题完整，不含有省略、不完整、或出现意外截断情况的问题。\n"
+                            "回答正确，完整。答案可由文本信息支持，与问题所问内容相符，不包含'根据文本内容'等字眼。回答逻辑清晰，不包含无关信息。\n"
+                            "若符合以上所有标准，则回答“有效”；如果任一条件不满足，则回答“无效”。\n"
+                            "请先简述你判断的原因，然后在最后一行输出'有效'或'无效'，不得输出其他信息。"
                         ),
                         UserMessage(
                             f"{text}\n\n请根据上面的文本判断以下问答是否有效：\n"
                             f"问题: {q}\n"
                             f"答案: {a}\n"
-                            "只输出'有效'或'无效'。"
+                            "请先简述你判断的原因，然后在最后一行输出'有效'或'无效'，不得输出其他信息。"
                         )
                     )
                 prompts.append(prompt)
             replies = await self.api.async_chat(prompts)
-            bin = [0 if "无效" in r else 1 for r in replies]
+            bin = [0 if "无效" in r.split()[-1] + r.split()[0] else 1 for r in replies]
+            delete_num = len([idx for idx in bin if idx == 0])
             verified_Q = [q for idx,q in enumerate(batch_questions) if bin[idx] == 1]
             verified_A = [a for idx,a in enumerate(batch_answers) if bin[idx] == 1]
             new_questions.extend(verified_Q)
@@ -183,18 +185,43 @@ class genQA(Strategy):
                             f"你的问题需要满足以下要求：\n"
                             f"1. 问题必须包括完整的信息以避免模糊，例如：具体的人物、名称、事件、时间等。\n"
                             f"2. 问题应当客观、具体，避免模糊不清。"
-                            f"3. 问题需基于客观事实，不得包含主观感受、预测或想象。\n"
-                            f"4. 每个问题必须指向客观事实而非主观感受或预测，想象。问题应当能在文本中找到答案。\n"
+                            f"3. 问题需基于客观事实，不得包含主观感受、预测或想象。问题应当能在文本中找到答案\n"
+                            f"4. 确保问题内容不重复，包含不同类型的问题并且覆盖文本的不同部分或不同维度。\n"
+                            f"每个问题以'问题'加数字加'::'开头，且问题内容不能重复。"
+                            
                         ),
                         UserMessage(
-                            f"文本:{text}\n每个问题一行，以数字加'.'开始，不能重复。"
+                            f"文本:{text}\n每个问题以'问题'加数字加'::'开头，且问题内容不能重复。请提问。"
                         ),                        
                 )
                 prompts.append(prompt)
             genQuestions = await self.api.async_chat(prompts)
-            logger.debug(f"{'-' * 20}Questions of {batch_titles[i]}{'-'*20}")
+            logger.debug(f"{'-' * 20}Questions of {batch_titles}{'-'*20}")
             logger.debug(genQuestions)
-            genQuestions = clean_and_split_reply_list(genQuestions)
+            genQuestions = clean_and_split_question_list(genQuestions)
+            questions.extend(genQuestions)
+            prompts = []
+            for i in range(len(batch_titles)):
+                prompt = buildMessages(
+                        SystemMessage(
+                            f"你对{main_theme}相关内容十分感兴趣。请您根据以下文本内容，围绕'{main_theme}'提出{num_question_per_title}个清晰、客观的问题，"
+                            f"这些问题中不能含'{batch_titles[i]}'，但能够从文本中与'{batch_titles[i]}'相关的信息回答\n"
+                            f"你的问题需要满足以下要求：\n"
+                            f"1. 问题必须包括完整的信息以避免模糊，例如：具体的人物、名称、事件、时间等。\n"
+                            f"2. 问题应当客观、具体，避免模糊不清。"
+                            f"3. 问题需基于客观事实，不得包含主观感受、预测或想象。问题应当能在文本中找到答案\n"
+                            f"4. 确保问题内容不重复，包含不同类型的问题并且覆盖文本的不同部分或不同维度。\n"
+                            f"每个问题以'问题'加数字加'::'开头，且问题内容不能重复。"
+                        ),
+                        UserMessage(
+                            f"文本:{text}\n每个问题以'问题'加数字加'::'开头，且问题内容不能重复。请提问。"
+                        ),                        
+                )
+                prompts.append(prompt)
+            genQuestions = await self.api.async_chat(prompts)
+            logger.debug(f"{'-' * 20}Questions of 2 {batch_titles}{'-'*20}")
+            logger.debug(genQuestions)
+            genQuestions = clean_and_split_question_list(genQuestions)
             questions.extend(genQuestions)
         return questions
     
@@ -206,7 +233,7 @@ class genQA(Strategy):
             prompts=  []
             for i in range(len(batch_questions)):
                 prompt = buildMessages(
-                        SystemMessage(f"{text}\n你是一位AI助手，请礼貌地回复以下问题。对于无法回答的问题，请回复'无法回答'"),
+                        SystemMessage(f"{text}\n你是一位AI助手。请从热情、耐心、专业、简洁中选择一个回答风格并礼貌地回答以下问题。对于无法回答的问题，请回复'无法回答'"),
                         UserMessage(
                             f"{batch_questions[i]}"
                         )

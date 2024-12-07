@@ -1,7 +1,7 @@
 import re
 ABANDONED_PATTERN_IN_QUESTIONS = [
-    r"^[\*\^\.\/\\\" ]*(回答|答案|解答|结果|答)",
-    r"^[\*\^\.\/\\\" ]*([Aa]nswer|[Rr]eply|[Rr]esponse)",
+    r"^\W*(回答|答案|解答|结果|答)",
+    r"^\W*([Aa]nswer|[Rr]eply|[Rr]esponse)",
 ]
 
 ABANDONED_PATTERN_IN_ANSWERS = [
