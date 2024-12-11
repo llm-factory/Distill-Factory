@@ -21,7 +21,7 @@ LlamaFeeder 是一个微调数据集生成工具，可以从文本内容中自�
 
 ```bash
 git clone https://github.com/the-seeds/LlamaFeeder.git
-cd LlamaFeeder/src
+cd LlamaFeeder/src # 切换到 src 文件夹，下面所有指令均以此为相对路径
 pip install -r requirements.txt
 ```
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 #### 单文件处理
 
-如果您希望使用单个文件（如一篇新闻报道）生成问答数据集，您需要在配置文件中指定输入文本的路径 `file_path`，文本主题 `main_theme` 等设置。 `example/result/single_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
+如果您希望使用单个文件（如一篇新闻报道）生成问答数据集，您需要在配置文件中指定输入文本的路径 `file_path`，文本主题 `main_theme` 等设置。 `../example/result/single_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
 **示例配置文件：**
 
@@ -55,20 +55,20 @@ method: "" # 数据生成方式
 
 ##### 运行
 
-您可以通过在以下示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并在 `src` 文件夹下运行指令：
+您可以通过在以下示例文件 `../example/config/single_file_demo.yaml` 中填入 API 相关配置并在 `src` 文件夹下运行指令：
 
-`python main.py example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集，并在对应保存文件`example/result/single_file_demo_QA.json`中查看生成效果。
+`python main.py ../example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集，并在对应保存文件`../example/result/single_file_demo_QA.json`中查看生成效果。
 
 ```yaml
-### example/config/single_file_demo.yaml
+### ../example/config/single_file_demo.yaml
 openai:
   model: ""
   base_url: ""
   api_key: ""
 
-file_path: "example/dataset/Olympics.txt"
+file_path: "../example/dataset/Olympics.txt"
 main_theme: "巴黎奥运会"
-save_dir: "example/result"
+save_dir: "../example/result"
 save_file_name: "single_file_demo_QA.json"
 method: "genQA"
 concurrent_api_requests_num: 1
@@ -76,7 +76,7 @@ concurrent_api_requests_num: 1
 
 ##### 查看运行结果
 
-运行后，应能在终端或者日志目录 `logger/` 中观察到日志文件记录的运行过程，包括本次运行所处理的文件路径，生成的问答对，生成的问答对数目等。
+运行后，应能在终端或者日志目录 `../log/` 中观察到日志文件记录的运行过程，包括本次运行所处理的文件路径，生成的问答对，生成的问答对数目等。
 
 ![image-20241207010109514](assets/image-20241207010109514.png)
 
@@ -88,7 +88,7 @@ concurrent_api_requests_num: 1
 
 ![image-20241207010255266](assets/image-20241207010255266.png)
 
-此时应该能够在 `example/result` 目录下找到所生成的问答数据集 `single_file_demo_QA.json` 。
+此时应该能够在 `../example/result` 目录下找到所生成的问答数据集 `single_file_demo_QA.json` 。
 
 ![image-20241207010715827](assets/image-20241207010715827.png)
 
@@ -100,7 +100,7 @@ concurrent_api_requests_num: 1
 
 #### 多文件处理
 
-如果您需要从多个文件中生成问答数据集（例如处理一批文档、小说等），您需要在配置文件中指定输入文件夹的路径 `file_folder` 以及您希望处理的文件类型 `file_type` 。`example/result/multi_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
+如果您需要从多个文件中生成问答数据集（例如处理一批文档、小说等），您需要在配置文件中指定输入文件夹的路径 `file_folder` 以及您希望处理的文件类型 `file_type` 。`../example/result/multi_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
 **示例配置文件：**
 
@@ -121,21 +121,21 @@ method: "" # 数据生成方式
 
 对于参数的完整说明请参考：[参数说明](#参数说明)
 
-您可以通过在示例文件 `example/config/multi_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
+您可以通过在示例文件 `../example/config/multi_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
-`python main.py example/config/multi_file_demo.yaml ` 以尝试使用多个文件生成问答数据集。
+`python main.py ../example/config/multi_file_demo.yaml ` 以尝试使用多个文件生成问答数据集。
 
 ```yaml
-### example/config/multi_file_demo.yaml
+### ../example/config/multi_file_demo.yaml
 openai:
   model: ""
   base_url: ""
   api_key: ""
 
-file_folder: "example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
-file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
+file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
+file_type: "rst" # 意味着 ../example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
 main_theme: "LLaMA-Factory使用文档"
-save_dir: "example/result"
+save_dir: "../example/result"
 save_file_name: "multi_file_demo_QA.json"
 method: "genQA"
 concurrent_api_requests_num: 1
@@ -173,20 +173,20 @@ concurrent_api_requests_num: 1
 
 **配置文件示例：**
 
-以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
+以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `../example/config/json_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
-`python main.py example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。`example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
+`python main.py ../example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。`../example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
 ```yaml
-### example/config/json_file_demo.yaml
+### ../example/config/json_file_demo.yaml
 openai:
   model: ""
   base_url: ""
   api_key: ""
 
-file_path: "example/dataset/dataset.json"
+file_path: "../example/dataset/dataset.json"
 main_theme: "地理科普"
-save_dir: "example/result"
+save_dir: "../example/result"
 save_file_name: "json_file_demo_QA.json"
 concurrent_api_requests_num: 1
 method: "genQA"
@@ -244,7 +244,7 @@ python webui.py
 | openai.model                | API 模型名称                                                 | \            |
 | openai.base_url             | API URL地址                                                  | \            |
 | openai.api_key              | API密钥                                                      | \            |
-| save_dir                    | 生成的数据集保存目录                                         | example/     |
+| save_dir                    | 生成的数据集保存目录                                         | ../example/     |
 | file_path                   | 输入文本路径                                                 | \            |
 | file_folder                 | 输入文件夹路径                                               | \            |
 | file_type                   | 输入文件夹中要处理的文件类型，多个类型用空格分隔             | txt          |
