@@ -21,7 +21,7 @@ LlamaFeeder 是一个微调数据集生成工具，可以从文本内容中自�
 
 ```bash
 git clone https://github.com/the-seeds/LlamaFeeder.git
-cd LlamaFeeder
+cd LlamaFeeder/src
 pip install -r requirements.txt
 ```
 
@@ -55,7 +55,7 @@ method: "" # 数据生成方式
 
 ##### 运行
 
-您可以通过在以下示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+您可以通过在以下示例文件 `example/config/single_file_demo.yaml` 中填入 API 相关配置并在 `src` 文件夹下运行指令：
 
 `python main.py example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集，并在对应保存文件`example/result/single_file_demo_QA.json`中查看生成效果。
 
@@ -121,7 +121,7 @@ method: "" # 数据生成方式
 
 对于参数的完整说明请参考：[参数说明](#参数说明)
 
-您可以通过在示例文件 `example/config/multi_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+您可以通过在示例文件 `example/config/multi_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
 `python main.py example/config/multi_file_demo.yaml ` 以尝试使用多个文件生成问答数据集。
 
@@ -173,7 +173,7 @@ concurrent_api_requests_num: 1
 
 **配置文件示例：**
 
-以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且运行指令：
+以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `example/config/json_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
 `python main.py example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。`example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
