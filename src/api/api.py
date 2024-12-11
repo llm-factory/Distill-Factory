@@ -6,7 +6,6 @@ import asyncio
 from model.config import Config
 from common.message import BaseMessage
 
-
 class BaseOpenAI():
     def __init__(self, _config):
         self._model = _config.model

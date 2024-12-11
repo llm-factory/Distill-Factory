@@ -72,7 +72,7 @@ class backtranslation_rewrite(Strategy):
         save_QA_dataset(questions, rewrite_answers, config.save_dir, config.save_file_name)
         return questions, answers
     
-    async def run(self, config, num_question_per_title=10, concurrent_api_requests_num=1):
+    async def run(self, config, num_question_per_title=5, concurrent_api_requests_num=1):
         init_QA_dataset(config.save_dir,config.save_file_name)
         all_questions = []
         all_answers = []

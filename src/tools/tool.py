@@ -93,8 +93,6 @@ def clean_and_split_question_list(replies:List[str])-> List[str]:
         matches_list = list(matches)
         questions = []
         for match in matches_list:
-            logger.error(f"match: {match}") 
-            print("group1:",match.group(1))
             question = match.group(1).strip()
             if question:
                 questions.append(question)

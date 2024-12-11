@@ -3,6 +3,7 @@ from common.message import *
 from tools.tool import *
 from tools.filter import *
 from tools.tool import read_file
+from postprocess.verify.verify import Verifier
 from tqdm import tqdm
 from io import StringIO
 import asyncio
@@ -14,6 +15,7 @@ logger = logging.getLogger('logger')
 class genQA(Strategy):
     def __init__(self,api):
         super().__init__(api)
+        self.verifier = Verifier(api)
     
     async def process_single_file(self, config,file_path: str, num_question_per_title: int, concurrent_api_requests_num: int):
         main_theme = config.main_theme
@@ -56,48 +58,11 @@ class genQA(Strategy):
         answers, idxs_to_remove = answers_filter(answers)
         questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
         logger.debug(f"{'=' * 30}verifying QAs of {file_path}{'='*30}")
-        questions,answers = await self.verifyQA(text,main_theme,questions,answers,concurrent_api_requests_num)
+        questions,answers = await self.verifier.verifyQA(text,main_theme,questions,answers,concurrent_api_requests_num)
         save_QA_dataset(questions,answers,config.save_dir,config.save_file_name)
         return questions, answers
     
-    async def verifyQA(self,text,main_theme,questions,answers,concurrent_api_requests_num=1):
-        prompts = []
-        new_questions = []
-        new_answers = []
-        for i in range(0,len(questions),concurrent_api_requests_num):
-            batch_questions = questions[i:i+concurrent_api_requests_num]
-            batch_answers = answers[i:i+concurrent_api_requests_num]
-            prompts = []
-            for q,a in zip(batch_questions,batch_answers):
-                prompt = buildMessages(
-                        SystemMessage(
-                            "你需要根据提供的文本，判断给定的问答是否“有效”。\n"
-                            "有效的问答的标准是：\n"
-                            f"问题合理。问题与文本主题 {main_theme} 相关，逻辑清晰，不混乱，符合人类习惯。问题中不包含回答等无关信息。\n" 
-                            "问题完整，不含有省略、不完整、或出现意外截断情况的问题。\n"
-                            "回答正确，完整。答案可由文本信息支持，与问题所问内容相符，不包含'根据文本内容'等字眼。回答逻辑清晰，不包含无关信息。\n"
-                            "若符合以上所有标准，则回答“有效”；如果任一条件不满足，则回答“无效”。\n"
-                            "请先简述你判断的原因，然后在最后一行输出'有效'或'无效'，不得输出其他信息。"
-                        ),
-                        UserMessage(
-                            f"{text}\n\n请根据上面的文本判断以下问答是否有效：\n"
-                            f"问题: {q}\n"
-                            f"答案: {a}\n"
-                            "请先简述你判断的原因，然后在最后一行输出'有效'或'无效'，不得输出其他信息。"
-                        )
-                    )
-                prompts.append(prompt)
-            replies = await self.api.async_chat(prompts)
-            bin = [0 if "无效" in r.split()[-1] + r.split()[0] else 1 for r in replies]
-            delete_num = len([idx for idx in bin if idx == 0])
-            verified_Q = [q for idx,q in enumerate(batch_questions) if bin[idx] == 1]
-            verified_A = [a for idx,a in enumerate(batch_answers) if bin[idx] == 1]
-            new_questions.extend(verified_Q)
-            new_answers.extend(verified_A)
-        return new_questions,new_answers
-    
-    
-    async def run(self, config, num_question_per_title=3, concurrent_api_requests_num=1):
+    async def run(self, config, num_question_per_title=5, concurrent_api_requests_num=1):
         init_QA_dataset(config.save_dir,config.save_file_name)
         all_questions = []
         all_answers = []
@@ -162,16 +127,6 @@ class genQA(Strategy):
         splitTitles = list(set(splitTitles))
         return splitTitles
     
-        
-    def getPersona(self, text):
-        prompt = buildMessages(
-                UserMessage(
-                    f"根据以下文本：\n{text}生成10个可能对该文本感兴趣的大致人物描述，不能包含人名，每个人物一行"
-                )
-        )
-        personas = clean_and_split_reply(self.api.chat(prompt))
-        return personas
-        
     async def generateQuestions(self, text, main_theme, num_question_per_title,titles,concurrent_api_requests_num=1,additional_info=""):
         questions = []
         for idx in tqdm(range(0,len(titles),concurrent_api_requests_num),desc='Generating questions'):
@@ -219,7 +174,7 @@ class genQA(Strategy):
                 )
                 prompts.append(prompt)
             genQuestions = await self.api.async_chat(prompts)
-            logger.debug(f"{'-' * 20}Questions of 2 {batch_titles}{'-'*20}")
+            logger.debug(f"{'-' * 20}Questions of {batch_titles}{'-'*20}")
             logger.debug(genQuestions)
             genQuestions = clean_and_split_question_list(genQuestions)
             questions.extend(genQuestions)
