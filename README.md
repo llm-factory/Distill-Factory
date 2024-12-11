@@ -10,10 +10,10 @@ LlamaFeeder 是一个微调数据集生成工具，可以从文本内容中自�
 - 支持开源大模型与闭源大模型接入。开源模型推荐使用 [imitater](https://github.com/the-seeds/imitater) 接入。闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
 
 - 多种数据生成策略：
-  - 基础问答生成 (genQA)：从文本中提取标题并生成相关问答对。
-  - 角色化问答生成 (genQA_persona)：基于不同角色视角生成多样化问答。
-  - 回译重写生成 (backtranslation_rewrite)：通过回译和重写提升问答质量。
-  - 支持自定义、修改、扩展数据生成策略。
+  - 基础问答生成 (genQA)：从文本中提取标题,根据标题生成相关问答对。
+  - 角色化问答生成 (genQA_persona)：从文本中提取标题,根据标题基于不同角色视角生成相关问答对。
+  - 回译重写生成 (backtranslation_rewrite)：通过回译和重写生成相关问答对。
+  - 支持修改、扩展、自定义数据生成策略。
 
 ## 使用准备
 
