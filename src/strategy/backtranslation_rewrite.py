@@ -53,7 +53,6 @@ class BacktransQAGenerator(Generator):
             config,text, titles
         )
         questions = questions_filter(questions)
-        logger.info("after filt",questions)
         answers = await self._generate_answers(text, questions)
         answers, idxs_to_remove = answers_filter(answers)
         questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
@@ -148,15 +147,8 @@ class BacktransQAGenerator(Generator):
                     batch_gen_questions = await self.api.async_chat(question_prompts,temperature=config.temperature)
                     
                     for extraction, gen_questions in zip(batch_extractions, batch_gen_questions):
-                        logger.debug(f"{'-'*20}gen questions{'-'*20}")
-                        logger.debug(f"{gen_questions}")
                         gen_questions = parse_response(gen_questions,"问题[\d\ ]+::")
-                        logger.debug(f"{'-'*20}gen questions after parsed{'-'*20}")
-                        logger.debug(f"{gen_questions}")
-
                         valid_questions = await self._validate_questions(gen_questions, config.concurrent_api_requests_num)
-                        logger.debug(f"{'-'*20}Extraction{'-'*20}")
-                        logger.debug(f"{extraction}")
                         logger.debug(f"{'-'*20}Generated Questions{'-'*20}")
                         for q in gen_questions:
                             logger.debug(q)
@@ -166,10 +158,6 @@ class BacktransQAGenerator(Generator):
                                 "questions": valid_questions
                             })
                             questions.extend(valid_questions)
-                        logger.debug(f"{'-'*20}Valid Questions{'-'*20}")
-                        logger.debug(valid_questions)
-        
-        logger.error("end end end")
         return questions, factlist, extraction2questions
 
     async def _validate_questions(self, questions: List[str], concurrent_requests: int) -> List[str]:
@@ -213,13 +201,12 @@ class BacktransQAGenerator(Generator):
                                   ),
                     UserMessage(f"文本：{text}\n问题：{question}" + self.answer_prompt if self.answer_prompt else f"文本：{text}\n问题：{question}")
                 )
-                logger.info(prompt)
                 prompts.append(prompt)
                 
             batch_answers = await self.api.async_chat(prompts,temperature=self.config.temperature)
             
             for q, a in zip(batch_questions, batch_answers):
-                logger.debug(f"{'-'*20}QA pair{'-'*20}")
+                logger.debug(f"{'-'*20}QA pairs{'-'*20}")
                 logger.debug(f"{'-'*15}Question{'-'*15}")
                 logger.debug(f"{q}")
                 logger.debug(f"{'-'*15}Answer{'-'*15}")
@@ -246,7 +233,7 @@ class BacktransQAGenerator(Generator):
                 prompts.append(prompt)
             batch_answers = await self.api.async_chat(prompts,temperature=self.config.temperature)
             for q, a in zip(batch_questions, batch_answers):
-                logger.debug(f"{'-'*20}rewritten QA pair{'-'*20}")
+                logger.debug(f"{'-'*20}rewritten QA pairs{'-'*20}")
                 logger.debug(f"{'-'*15}Question{'-'*15}")
                 logger.debug(f"{q}")
                 logger.debug(f"{'-'*15}Answer{'-'*15}")
@@ -295,7 +282,7 @@ class backtranslation_rewrite(Strategy):
         init_QA_dataset(config.save_dir, config.save_file_name)
         file_paths = getFilePaths(config)
         logger.debug(f"{'=' * 30}File Paths{'='*30}")
-        logger.debug(file_paths)
+        logger.info(file_paths)
         all_questions = []
         all_answers = []
         tasks = [self.process_single_file(file_path, config) for file_path in file_paths]

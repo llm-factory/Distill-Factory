@@ -78,8 +78,6 @@ class TwoStageQAGenerator(Generator):
                 )
                 prompts.append(prompt)
 
-            logger.debug(f"{'-'*20}Prompts{'-'*20}")
-            logger.debug(prompts)
             responses = await self.api.async_chat(prompts,temperature=self.config.temperature)
             responses = parse_responses(responses,"问题[\d ]+::")
             all_questions.extend(responses)
@@ -228,7 +226,7 @@ class genQA(Strategy):
         
         file_paths = getFilePaths(config)
         logger.debug(f"{'=' * 30}File Paths{'='*30}")
-        logger.debug(file_paths)
+        logger.info(file_paths)
         all_questions = []
         all_answers = []        
         tasks = [self.process_single_file(file_path, config) for file_path in file_paths]

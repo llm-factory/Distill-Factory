@@ -62,10 +62,7 @@ def write_json_file(file_path:str, dataset:List[dict]):
 def format_structured_data(data: Dict, template: str) -> str:
     try:
         formatted_data = {}
-        logger.debug(f"template: {template}")
         for key, value in data.items():
-            logger.debug(f"key: {key}, value: {value}")
-            
             if isinstance(value, list):
                 formatted_data[key] = '、'.join(str(v) for v in value)
             else:

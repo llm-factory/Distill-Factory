@@ -110,7 +110,6 @@ class WebUI:
                             file_count="multiple",
                             scale=2
                         )
-                        print("file_upload is ",file_upload)
                         file_path = gr.Textbox(
                             label="File Path", 
                             info="输入文本路径",
@@ -332,7 +331,6 @@ class WebUI:
                 
                 def read_from_datas(save_dir,file_name):
                     save_path = Path(save_dir)/ Path(file_name)
-                    print("save_path is : ",save_path)
                     if not save_path.exists():
                         return pd.DataFrame(
                             columns=["question", "answer"]

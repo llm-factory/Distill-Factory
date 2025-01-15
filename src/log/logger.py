@@ -25,7 +25,7 @@ class Logger():
         streamHandler = logging.StreamHandler(sys.stderr)
 
         fileHandler.setLevel(logging.DEBUG)
-        streamHandler.setLevel(logging.DEBUG)
+        streamHandler.setLevel(logging.INFO)
         
         fileHandler.setFormatter(formatter)
         streamHandler.setFormatter(formatter)
