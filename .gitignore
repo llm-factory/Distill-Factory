@@ -2,3 +2,5 @@ __pycache__/
 config.yaml
 *.log
 .gradio
+*.json
+*.ipynb

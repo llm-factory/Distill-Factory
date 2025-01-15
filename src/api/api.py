@@ -36,7 +36,6 @@ class API(BaseOpenAI):
     def get_api_reply(self,messages: List[Dict[str, str]], **kwargs) -> str:
         result = self.client.chat.completions.create(messages=messages, 
                                                         model=self._model,
-                                                        temperature=self.temperature,
                                                         **kwargs)        
         return result.choices[0].message.content    
 
@@ -48,33 +47,10 @@ class API(BaseOpenAI):
         result = await self.async_client.chat.completions.create(
             messages=messages,
             model=self._model,
-            temperature=self.temperature 
+            **kwargs 
         )
         return result.choices[0].message.content
     
     async def async_chat(self, messages: List[List[BaseMessage]], **kwargs) -> List[str]:
         response= await asyncio.gather(*(self.async_get_api_reply(message,**kwargs) for message in messages))
-        return response
-
-
-
-class AsyncAPI(BaseOpenAI):
-    def __init__(self,_config:Config):
-        super().__init__(_config)
-        self.async_client = AsyncOpenAI(
-            max_retries=5,
-            timeout=120.0,
-            base_url=self.base_url,
-            api_key=self.api_key
-        )
-    async def get_api_reply(self,messages:List[BaseMessage], **kwargs) -> str:
-        result = await self.async_client.chat.completions.create(
-            messages=messages,
-            model=self._model,
-            temperature=self.temperature 
-        )
-        return result.choices[0].message.content
-    
-    async def async_chat(self, messages: List[List[BaseMessage]], **kwargs) -> List[str]:
-        response= await asyncio.gather(*(self.get_api_reply(message,**kwargs) for message in messages))
         return response

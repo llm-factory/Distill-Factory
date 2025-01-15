@@ -1,6 +1,44 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union,List
 from pathlib import Path
 import yaml
+from dataclasses import dataclass
+import logging
+
+logger = logging.getLogger('logger')
+
+
+@dataclass
+class APIConfig:
+    base_url: str = None
+    api_key: str = None
+    model: str = None
+    temperature: float = 1.0
+
+@dataclass
+class FileConfig:
+    file_path: List[str]
+    file_folder: Optional[str] = None
+    is_structure_data: bool = False
+    text_template: Optional[str] = None
+    chunk_size: int = 2048
+    file_type: List[str] = None
+    main_theme: str = ""
+
+
+@dataclass
+class GenerationConfig:
+    method: str
+    num_questions_per_title: int = 5
+    splitter: str = "问题::"
+    concurrent_requests: int = 1
+    question_prompt: Optional[str] = None
+    answer_prompt: Optional[str] = None    
+    save_file_name: str = "dataset.json"
+    save_dir: str = "./"
+    concurrent_api_requests_num: int = 1
+    max_nums: int = 1e6
+    quantity_level: int = 3
+    diversity_mode: str = "basic"
 
 class Config:
     def __init__(self, config_dict=None,file_path=None):
@@ -9,28 +47,86 @@ class Config:
         if file_path:
             self.file_path = file_path
             self.conf_dict = self.load_config(file_path)
-        openai_config: Dict = self.conf_dict.get("openai", {})
-        self.base_url: str = openai_config.get("base_url")
+        
+        
+        api_config_dict = self.conf_dict.get("api", {})
+        self.api_config = APIConfig(
+            base_url=api_config_dict.get("base_url"),
+            api_key=api_config_dict.get("api_key"),
+            model=api_config_dict.get("model"),
+            temperature=api_config_dict.get("temperature", 1.0)
+        )
+        self.base_url = self.api_config.base_url
+        self.api_key = self.api_config.api_key
+        self.model = self.api_config.model
+        self.temperature = self.api_config.temperature        
         if self.base_url is None:
-            raise ValueError("base_url is required")
-        self.api_key: str = openai_config.get("api_key")
+            raise ValueError("base_url of api is required")
         if self.api_key is None:
-            raise ValueError("api_key is required")
-        self.model: str = openai_config.get("model")
+            raise ValueError("api_key of api is required")
+        self.model: str = self.api_config.model
         if self.model is None:
-            raise ValueError("model is required")
-        self.temperature: float = openai_config.get("temperature", 1.0)
-        self.save_dir: str = self.conf_dict.get("save_dir", "./")
-        self.main_theme: str = self.conf_dict.get("main_theme")
-        self.file_path: str = self.conf_dict.get("file_path",None)
-        self.file_folder: str = self.conf_dict.get("file_folder")
-        self.concurrent_api_requests_num: int = self.conf_dict.get("concurrent_api_requests_num", 1)
-        self.method: str = self.conf_dict.get("method")
-        self.file_type: str = self.conf_dict.get("file_type", "txt")
-        self.save_file_name: str = self.conf_dict.get("save_file_name", "dataset.json")
-        self.is_structure_data: bool = self.conf_dict.get("is_structure_data", False)
-        self.text_template: str = self.conf_dict.get("text_template", None)
-    
-    def load_config(self, file_path: str) -> Dict:
-        with open(file_path, "r", encoding="utf-8") as f:
+            raise ValueError("model name of api is required")
+        
+        
+        
+        file_config_dict = self.conf_dict.get("file", {})        
+        if not file_config_dict:
+            raise ValueError("file config is required")
+        self.file_config = FileConfig(
+            file_path=file_config_dict.get("file_path").split(),
+            file_folder=file_config_dict.get("file_folder"),
+            main_theme=file_config_dict.get("main_theme",""),
+            is_structure_data=file_config_dict.get("is_structure_data", False),
+            text_template=file_config_dict.get("text_template"),
+            chunk_size=file_config_dict.get("chunk_size", 2048),
+            file_type=file_config_dict.get("file_type", "txt")
+        )
+        logger.error(self.file_config)
+        self.main_theme: str = self.file_config.main_theme
+        self.file_path: List[str] = self.file_config.file_path
+        self.file_folder: str = self.file_config.file_folder
+        self.is_structure_data: bool = self.file_config.is_structure_data
+        self.text_template: str = self.file_config.text_template        
+        self.chunk_size: int = self.file_config.chunk_size
+        self.file_type: str = self.file_config.file_type
+        if not self.file_path and not self.file_folder:
+            raise ValueError("file_path or file_folder is required")
+        if self.file_folder and not self.file_type:
+            raise ValueError("file_type is required if file_folder is True")
+        
+        
+        
+        generation_config_dict = self.conf_dict.get("generation", {})
+        self.generation_config = GenerationConfig(
+            method=generation_config_dict.get("method"),
+            num_questions_per_title=generation_config_dict.get("num_questions_per_title", 5),
+            splitter=generation_config_dict.get("splitter", "<问题>:"),
+            concurrent_requests=generation_config_dict.get("concurrent_requests", 1),
+            question_prompt=generation_config_dict.get("question_prompt"),
+            answer_prompt=generation_config_dict.get("answer_prompt"),
+            save_file_name=generation_config_dict.get("save_file_name", "genDataset.json"),
+            save_dir=generation_config_dict.get("save_dir", "./"),
+            concurrent_api_requests_num=generation_config_dict.get("concurrent_api_requests_num", 1),
+            max_nums=generation_config_dict.get("max_nums", 1e6),
+            quantity_level = generation_config_dict.get("quantity_level", 3),
+            diversity_mode = generation_config_dict.get("diversity_mode", "basic"),
+        )
+        self.method: str = self.generation_config.method
+        self.num_questions_per_title: int = self.generation_config.num_questions_per_title
+        self.splitter: str = self.generation_config.splitter
+        self.concurrent_requests: int = self.generation_config.concurrent_requests
+        self.question_prompt: str = self.generation_config.question_prompt
+        self.answer_prompt: str = self.generation_config.answer_prompt
+        self.save_file_name: str = self.generation_config.save_file_name
+        self.save_dir: str = self.generation_config.save_dir
+        self.concurrent_api_requests_num: int = self.generation_config.concurrent_api_requests_num
+        self.max_nums: int = self.generation_config.max_nums
+        self.quantity_level: int = self.generation_config.quantity_level
+        self.diversity_mode: str = self.generation_config.diversity_mode
+        
+        if not self.method:
+            raise ValueError("generation method is required")
+    def load_config(self, file_path):
+        with open(file_path, "r",encoding='utf-8') as f:
             return yaml.safe_load(f)

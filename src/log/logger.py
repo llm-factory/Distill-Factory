@@ -17,6 +17,8 @@ class Logger():
             f.write('')
         log = logging.getLogger('logger')
         self.name = log_file
+
+        log.handlers.clear()
         log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fileHandler = logging.FileHandler(log_file, encoding='utf-8')
@@ -30,6 +32,7 @@ class Logger():
         
         log.addHandler(fileHandler)
         log.addHandler(streamHandler)
+        log.propagate = False
         return log
 
     def flush_logger():
