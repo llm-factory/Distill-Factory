@@ -46,7 +46,6 @@ class WebUI:
             api_key = api_config.get("api_key")
             
             file_config = config_dict.get("file", {})
-            save_dir = file_config.get("save_dir", "./")
             file_path = file_config.get("file_path")
             file_folder = file_config.get("file_folder")
             main_theme = file_config.get("main_theme", "")
@@ -58,6 +57,7 @@ class WebUI:
             method = generation_config.get("method")
             concurrent_api_requests_num = generation_config.get("concurrent_api_requests_num", 1)
             file_name = generation_config.get("save_file_name", "dataset.json")
+            save_dir = generation_config.get("save_dir", "./")
             question_prompt = generation_config.get("question_prompt")
             answer_prompt = generation_config.get("answer_prompt")
             max_nums = generation_config.get("max_nums", 1e6)
@@ -171,21 +171,7 @@ class WebUI:
                             scale=2
                         )
 
-                    with gr.Row(visible=True) as genqa_config:
-                        question_prompt = gr.Textbox(
-                            label="Question Prompt[Optional]",
-                            info="问题生成提示词要求",
-                            lines=3,
-                            scale=2
-                        )
-                        answer_prompt = gr.Textbox(
-                            label="Answer Prompt[Optional]",
-                            info="答案生成提示词要求",
-                            lines=3,
-                            scale=2
-                        )
-                    
-                    with gr.Row(visible=False) as backtrans_config:
+                    with gr.Row():
                         question_prompt = gr.Textbox(
                             label="Question Prompt[Optional]",
                             info="问题生成提示词要求",
@@ -269,11 +255,12 @@ class WebUI:
                         )
 
                 with gr.Group():
-                    gr.Markdown("### config")
+                    # gr.Markdown("### config")
                     display_config = gr.Textbox(
                         label="Config",
                         max_lines=20,
-                        interactive=False
+                        interactive=False,
+                        visible=False
                     )
 
                 def update_config(*args):
@@ -289,7 +276,6 @@ class WebUI:
                             "api_key": api_key
                         },
                         "file": {
-                            "save_dir": save_dir,
                             "file_path": file_path,
                             "file_folder": file_folder,
                             "main_theme": main_theme,
@@ -300,6 +286,7 @@ class WebUI:
                         "generation": {
                             "method": method,
                             "concurrent_api_requests_num": int(concurrent_api_requests_num) if concurrent_api_requests_num else 1,
+                            "save_dir": save_dir,
                             "save_file_name": file_name,
                             "question_prompt": question_prompt,
                             "answer_prompt": answer_prompt,
@@ -476,11 +463,6 @@ class WebUI:
                     else:
                         return gr.update(visible=False), gr.update(visible=False)
 
-                method.change(
-                    toggle_visibility,
-                    inputs=[method],
-                    outputs=[genqa_config, backtrans_config]
-                )
                 config_path.submit(
                     fn = self.read_from_configs,
                     inputs=[config_path],
@@ -490,12 +472,6 @@ class WebUI:
                         text_template, question_prompt, answer_prompt, max_nums
                         # display_config
                     ]
-                )
-
-                method.change(
-                    toggle_visibility,
-                    inputs=[method],
-                    outputs=[genqa_config, backtrans_config]
                 )
 
                 file_upload.change(fn=get_file_path, inputs=file_upload, outputs=file_path)

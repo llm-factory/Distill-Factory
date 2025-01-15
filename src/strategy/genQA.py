@@ -32,13 +32,11 @@ DEFAULT_QUESTION_FORMAT_CONTROL = "每个问题以'问题'加数字加'::'开头
 DEFAULT_ANSWER_PROMPT = """你是一位专业的AI助手。请根据以下文本内容回答问题。对于无法回答的问题，请回复'无法回答'。"""
 
 class TwoStageQAGenerator(Generator):
-    def __init__(self, api, config,title_prompt: str = DEFAULT_TITLE_PROMPT,
-                 question_prompt: str = DEFAULT_QUESTION_REQ_PROMPT,
-                 answer_prompt: str = DEFAULT_ANSWER_PROMPT):
+    def __init__(self, api, config):
         self.api = api
-        self.title_prompt = title_prompt
-        self.question_prompt = question_prompt
-        self.answer_prompt = answer_prompt
+        self.title_prompt = DEFAULT_TITLE_PROMPT
+        self.question_prompt = config.question_prompt
+        self.answer_prompt = config.answer_prompt
         self.config = config
         self.split = self.config.quantity_level >= 4
         self.num_questions_per_title = self.config.quantity_level

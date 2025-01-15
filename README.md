@@ -38,17 +38,18 @@ pip install -r requirements.txt
 **示例配置文件：**
 
 ```yaml
-openai:
-  model: ""      # 所使用模型的名称
-  base_url: ""   # API URL
-  api_key: ""    # API 密钥
-  
-file_path: "" # 输入文本的路径
-main_theme: "" # 文本主题
-save_dir: ""     # 生成数据集的保存目录
-save_file_name: "" # 生成问答数据集的文件名
-concurrent_api_requests_num: 1 # api异步请求数
-method: "" # 数据生成方式
+api: # api相关配置
+  model: ""
+  base_url: ""
+  api_key: ""
+file: # 生成数据集所用文件相关配置
+  file_path: "" # 输入文本的路径
+  main_theme: ""  # 文本主题
+generation: # 数据生成相关配置
+  method: "" # 生成方式
+  concurrent_api_requests_num: 1 # api异步请求数
+  save_dir: ""     # 生成数据集的保存目录
+  save_file_name: "" # 生成问答数据集的文件名
 ```
 
 对于参数的完整说明请参考：[参数说明](#参数说明)
@@ -60,18 +61,18 @@ method: "" # 数据生成方式
 `python main.py ../example/config/single_file_demo.yaml ` 以尝试使用单个文件生成问答数据集，并在对应保存文件`../example/result/single_file_demo_QA.json`中查看生成效果。
 
 ```yaml
-### ../example/config/single_file_demo.yaml
-openai:
+api:
   model: ""
   base_url: ""
   api_key: ""
-
-file_path: "../example/dataset/Olympics.txt"
-main_theme: "巴黎奥运会"
-save_dir: "../example/result"
-save_file_name: "single_file_demo_QA.json"
-method: "genQA"
-concurrent_api_requests_num: 1
+file:
+  file_path: "../example/dataset/Olympics.txt"
+  main_theme: "巴黎奥运会"
+generation:
+  method: "genQA"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "single_file_demo_QA.json"
 ```
 
 ##### 查看运行结果
@@ -105,18 +106,20 @@ concurrent_api_requests_num: 1
 **示例配置文件：**
 
 ```yaml
-openai:
-  model: ""      # 所使用模型的名称
-  base_url: ""   # API URL
-  api_key: ""    # API 密钥
-  
-file_folder: "" # 输入文件夹的路径
-file_type: "" # 输入文件夹中要处理的文件类型
-main_theme: "" # 文本主题
-save_dir: ""     # 生成数据集的保存目录
-save_file_name: "" # 生成问答数据集的文件名
-concurrent_api_requests_num: 1 # api异步请求数
-method: "" # 数据生成方式
+api: # api相关配置
+  model: ""
+  base_url: ""
+  api_key: ""
+file: # 生成数据集所用文件相关配置
+  file_folder: "" # 输入文件夹路径
+  file_type: "" # 文件夹中需要使用的文件类型
+  main_theme: "" # 文本主题
+generation: # 数据生成相关配置
+  method: "" # 生成方式
+  concurrent_api_requests_num: 1 # api异步请求数
+  save_dir: ""     # 生成数据集的保存目录
+  save_file_name: "" # 生成问答数据集的文件名
+
 ```
 
 对于参数的完整说明请参考：[参数说明](#参数说明)
@@ -127,18 +130,19 @@ method: "" # 数据生成方式
 
 ```yaml
 ### ../example/config/multi_file_demo.yaml
-openai:
+api:
   model: ""
   base_url: ""
   api_key: ""
-
-file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
-file_type: "rst" # 意味着 ../example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
-main_theme: "LLaMA-Factory使用文档"
-save_dir: "../example/result"
-save_file_name: "multi_file_demo_QA.json"
-method: "genQA"
-concurrent_api_requests_num: 1
+file:
+  file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
+  file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
+  main_theme: "LLaMA-Factory使用文档"
+generation:
+  method: "genQA"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "multi_file_demo_QA.json"
 ```
 
 
@@ -178,20 +182,20 @@ concurrent_api_requests_num: 1
 `python main.py ../example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。`../example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
 ```yaml
-### ../example/config/json_file_demo.yaml
-openai:
+api:
   model: ""
   base_url: ""
   api_key: ""
-
-file_path: "../example/dataset/dataset.json"
-main_theme: "地理科普"
-save_dir: "../example/result"
-save_file_name: "json_file_demo_QA.json"
-concurrent_api_requests_num: 1
-method: "genQA"
-is_structure_data: True  # 表示输入文件是结构化数据
-text_template: "【标题】: {title}\n【来源】: {source}\n【时间】: {date}\n【内容】: {content}\n"  # JSON 数据的格式模板
+file:
+  file_path: "../example/dataset/dataset.json"
+  main_theme: "科普知识"
+generation:
+  method: "genQA"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "json_file_demo_QA.json"
+  is_structure_data: True  # 表示输入文件是结构化数据
+  text_template: "【标题】: {title}\n{source}在{date}提出：\n{content}"  # JSON 数据的格式模板
 ```
 对于参数的完整说明请参考：[参数说明](#参数说明)
 
@@ -213,25 +217,37 @@ python webui.py
 
 若点击所提供 url（通常是:http://127.0.0.1:7860 ）后出现以下界面则说明启动成功。
 
-<img src="assets/image-20241129181253778.png" alt="image-20241129181253778" style="zoom:50%;" />
+![image-20250115224622398](assets/image-20250115224622398.png)
 
 #### 载入配置文件
 
-若您已配置好配置文件，可直接输入配置文件路径后回车。您应当可以看到各个配置项正常导入。导入配置文件后，您可以根据在 WebUI 根据需求修改配置，例如更改文件保存路径，文件保存名等。
+若您已配置好配置文件，可直接输入配置文件路径后回车。您应当可以看到各个配置项正常导入。导入配置文件后，您可以根据在 WebUI 根据需求修改配置，例如更改文件保存路径，文件保存名等。除此以外，您也可以根据提示一步步配置生成参数。
 
-![image-20241207002347109](assets/image-20241207002347109.png)
+![image-20250115215112618](assets/image-20250115215112618.png)
+
+- api配置：填入所使用的 api 模型，请求地址及密钥即可
+
+- 文件配置：选择将要用于数据生成的文件，可以选择逐个文件上传或一次上传整个文件夹。上传整个文件夹时建议指定 File Type 文件类型以避免包含不需要的文件。
+
+  ![image-20250115220301041](assets/image-20250115220301041.png)
+
+- 生成配置：选择生成方式以及生成数量，多样性控制。Question Prompt和Answer Prompt可填入对生成问答的额外要求
+
+​	![image-20250115220500872](assets/image-20250115220500872.png)
+
+- 保存配置：指定文件保存路径。
 
 #### 运行
 
 配置完成并确认无误后，点击 `Run` 按钮便可开始生成数据。
 
-![image-20241207014741701](assets/image-20241207014741701.png)
+若可以看到跳出成功提示，可观察到输出文本框日志，并在一段时间后在“数据集预览”处观察到符合要求的合成数据集便说明运行成功。
 
-若可以看到跳出成功提示，并可观察到输出文本框日志便说明启动成功。
+![image-20250115223840545](assets/image-20250115223840545.png)
 
-![image-20241207005504226](assets/image-20241207005504226.png)
+![image-20250115224029401](assets/image-20250115224029401.png)
 
-
+生成结束后，界面将提示生成数量及文件保存路径。
 
 
 
@@ -241,23 +257,22 @@ python webui.py
 
 | 参数名                      | 参数介绍                                                     | 默认值       |
 | --------------------------- | ------------------------------------------------------------ | ------------ |
-| openai.model                | API 模型名称                                                 | \            |
-| openai.base_url             | API URL地址                                                  | \            |
-| openai.api_key              | API密钥                                                      | \            |
-| save_dir                    | 生成的数据集保存目录                                         | ../example/     |
-| file_path                   | 输入文本路径                                                 | \            |
-| file_folder                 | 输入文件夹路径                                               | \            |
-| file_type                   | 输入文件夹中要处理的文件类型，多个类型用空格分隔             | txt          |
-| main_theme                  | 文本主题                                                     | \            |
-| concurrent_api_requests_num | API并发请求数量                                              | 4            |
-| method                      | 数据生成方式                                                 | genQA        |
-| save_file_name              | 生成问答数据集的文件名                                       | dataset.json |
-| is_structure_data           | 是否是结构化 JSON 数据，是则按照text_template读取文本，否则直接读入纯文本 | False        |
-| text_template               | 从 JSON 格式数据构造生成问题所需文本的模板。                 | \            |
+| api.model                | API 模型名称                                                 | \            |
+| api.base_url           | API URL地址                                                  | \            |
+| api.api_key            | API密钥                                                      | \            |
+| file.file_path              | 输入文本路径                                                 | \            |
+| file.file_folder            | 输入文件夹路径                                               | \            |
+| file.file_type              | 输入文件夹中要处理的文件类型，多个类型用空格分隔             | txt          |
+| file.main_theme             | 文本主题                                                     | \            |
+| generation.save_dir | 生成的数据集保存目录 | ../example/ |
+| generation.concurrent_api_requests_num | API并发请求数量                                              | 4            |
+| generation.method           | 数据生成方式                                                 | genQA        |
+| generation.save_file_name   | 生成问答数据集的文件名                                       | dataset.json |
+| generation.is_structure_data | 是否是结构化 JSON 数据，是则按照text_template读取文本，否则直接读入纯文本 | False        |
+| generation.text_template    | 从 JSON 格式数据构造生成问题所需文本的模板。                 | \            |
 
 > 输入纯文本时请设置 is_structure_data 为 False。
 >
 > 设置 is_structure_data 为 True 时请确保 JSON 格式数据包含 text_template 中对应的键。
 >
 > 设置 file_folder 会将 file_path 覆盖。
-

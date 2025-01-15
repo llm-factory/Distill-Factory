@@ -105,7 +105,7 @@ class Config:
             concurrent_requests=generation_config_dict.get("concurrent_requests", 1),
             question_prompt=generation_config_dict.get("question_prompt"),
             answer_prompt=generation_config_dict.get("answer_prompt"),
-            save_file_name=generation_config_dict.get("save_file_name", "genDataset.json"),
+            save_file_name=generation_config_dict.get("save_file_name", "dataset.json"),
             save_dir=generation_config_dict.get("save_dir", "./"),
             concurrent_api_requests_num=generation_config_dict.get("concurrent_api_requests_num", 1),
             max_nums=generation_config_dict.get("max_nums", 1e6),
