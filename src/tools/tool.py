@@ -185,7 +185,7 @@ def parse_response(response: str, regex_splitter: str = "问题[\d ]+::") -> Lis
     matches_list = list(matches)
     for match in matches_list:
         response = match.group(1).strip("")
-        response = response.lstrip(". ")
+        response = response.lstrip(". :：")
         if response:
             responses.append(response)
     return responses
