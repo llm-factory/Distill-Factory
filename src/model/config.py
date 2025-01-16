@@ -40,6 +40,10 @@ class GenerationConfig:
     quantity_level: int = 3
     diversity_mode: str = "basic"
 
+@dataclass
+class RagConfig:
+    enable_rag: bool = False
+    rag_api_config: APIConfig = None
 class Config:
     def __init__(self, config_dict=None,file_path=None):
         if config_dict:
@@ -74,7 +78,7 @@ class Config:
         if not file_config_dict:
             raise ValueError("file config is required")
         self.file_config = FileConfig(
-            file_path=file_config_dict.get("file_path").split(),
+            file_path=file_config_dict.get("file_path","").split(),
             file_folder=file_config_dict.get("file_folder"),
             main_theme=file_config_dict.get("main_theme",""),
             is_structure_data=file_config_dict.get("is_structure_data", False),
@@ -101,11 +105,11 @@ class Config:
         self.generation_config = GenerationConfig(
             method=generation_config_dict.get("method"),
             num_questions_per_title=generation_config_dict.get("num_questions_per_title", 5),
-            splitter=generation_config_dict.get("splitter", "<问题>:"),
+            splitter=generation_config_dict.get("splitter", None),
             concurrent_requests=generation_config_dict.get("concurrent_requests", 1),
             question_prompt=generation_config_dict.get("question_prompt"),
             answer_prompt=generation_config_dict.get("answer_prompt"),
-            save_file_name=generation_config_dict.get("save_file_name", "dataset.json"),
+            save_file_name=generation_config_dict.get("save_file_name", None),
             save_dir=generation_config_dict.get("save_dir", "./"),
             concurrent_api_requests_num=generation_config_dict.get("concurrent_api_requests_num", 1),
             max_nums=generation_config_dict.get("max_nums", 1e6),
@@ -127,6 +131,28 @@ class Config:
         
         if not self.method:
             raise ValueError("generation method is required")
+        if not self.save_file_name:
+            raise ValueError("save_file_name is required")
+    
+    
+        
+        rag_conf_dict = self.conf_dict.get("rag", {})
+        self.enable_rag = rag_conf_dict.get("enable_rag", False)
+        self.rag_api_config = rag_conf_dict.get("api", None)
+        
+        self.rag_api_key = self.rag_api_config.get("api_key", None)
+        self.rag_model_name = self.rag_api_config.get("model", None)
+        self.rag_temperature = self.rag_api_config.get("temperature", 1.0)
+        self.rag_base_url = self.rag_api_config.get("base_url", None)
+        self.rag_config = RagConfig(
+            enable_rag=self.enable_rag,
+            rag_api_config=self.rag_api_config
+        )
+        
+        if self.enable_rag and not self.rag_api_config:
+            raise ValueError("rag api config is required if enable rag")
+        
+        
     def load_config(self, file_path):
         with open(file_path, "r",encoding='utf-8') as f:
             return yaml.safe_load(f)

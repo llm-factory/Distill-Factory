@@ -40,6 +40,7 @@ class TwoStageQAGenerator(Generator):
         self.config = config
         self.split = self.config.quantity_level >= 4
         self.num_questions_per_title = self.config.quantity_level
+        self.text_retriever = BaseTextRetriever(self.api,self.config)
 
     async def generate(self, text: str, config: GenerationConfig) -> Tuple[List[str], List[str]]:
         personas = []
@@ -78,6 +79,8 @@ class TwoStageQAGenerator(Generator):
 
             responses = await self.api.async_chat(prompts,temperature=self.config.temperature)
             responses = parse_responses(responses,"问题[\d ]+::")
+            logger.debug(f"{'-'*20}Questions{'-'*20}")
+            logger.debug(responses)
             all_questions.extend(responses)
         
         return all_questions
@@ -102,8 +105,14 @@ class TwoStageQAGenerator(Generator):
         for i in range(0, len(questions), config.concurrent_requests):
             batch_questions = questions[i:i + config.concurrent_requests]
             prompts = []
-            
-            for question in batch_questions:
+            if config.enable_rag:
+                logger.info("enable rag")
+                texts = await self.text_retriever.get_text_from_rag(batch_questions)
+            else:
+                texts = [text] * len(batch_questions)
+            logger.debug("TEXTS")
+            logger.debug(texts)
+            for question,text in zip(batch_questions,texts):
                 prompt_template = self.answer_prompt 
                 # print(prompt_template)
                 formatted_prompt = prompt_template.format()
@@ -175,7 +184,7 @@ class SimpleQAVerifier(Verifier):
 
 class genQA(Strategy):
     def _create_text_retriever(self) -> TextRetriever:
-        return BaseTextRetriever(self.api)
+        return BaseTextRetriever(self.api,self.config)
     
     def _create_qa_generator(self) -> Generator:
         return TwoStageQAGenerator(self.api,self.config)

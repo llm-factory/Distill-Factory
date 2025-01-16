@@ -12,13 +12,14 @@ import json
 import pandas as pd
 from multiprocessing import Process, Event
 
+
 class WebUI:
     def __init__(self):
         self.config = None
         self.api = None
         self.logger = Logger()
         self.loggerName = self.logger.getName()
-        # self.P = None
+        self.timer_active = False
         
     def load_config_from_file(self, config_path):
         if os.path.exists(config_path):
@@ -29,14 +30,14 @@ class WebUI:
             return None
 
     def read_from_logs(self):
-        with open(self.loggerName, "r", encoding="utf-8") as f:
-            logs = f.read()
-        return logs
+        if self.timer_active:
+            with open(self.loggerName, "r", encoding="utf-8") as f:
+                logs = f.read()
+            return logs
     
     def read_from_configs(self, config_path):
         if config_path:
             config_dict = self.load_config_from_file(config_path)
-            print(config_dict)
             if config_dict is None:
                 return f"Error: Could not load config file:{config_path}"
             
@@ -62,7 +63,15 @@ class WebUI:
             answer_prompt = generation_config.get("answer_prompt")
             max_nums = generation_config.get("max_nums", 1e6)
             
-            return model, base_url, api_key, save_dir, file_path, file_folder, file_name, main_theme, concurrent_api_requests_num, method, file_types, is_structure_data, text_template, question_prompt, answer_prompt, max_nums
+            rag_conf_dict = config_dict.get("rag", {})
+            enable_rag = rag_conf_dict.get("enable_rag", False)
+            rag_api_conf_dict = rag_conf_dict.get("api", {})
+            
+            rag_model_name = rag_api_conf_dict.get("model")
+            rag_base_url = rag_api_conf_dict.get("base_url")
+            rag_api_key = rag_api_conf_dict.get("api_key")
+            
+            return model, base_url, api_key, save_dir, file_path, file_folder, file_name, main_theme, concurrent_api_requests_num, method, file_types, is_structure_data, text_template, question_prompt, answer_prompt, max_nums, enable_rag, rag_model_name, rag_base_url, rag_api_key
         return "Error: Config path is empty"
 
     def run(self):
@@ -70,8 +79,8 @@ class WebUI:
 
             gr.Markdown("""## 配置设置""")
             config_path = gr.Textbox(
-                label="Config Path",
-                info="配置文件路径",
+                label="Config Path[Optional]",
+                info="配置文件路径[可选]",
                 scale=2
             )
 
@@ -104,7 +113,7 @@ class WebUI:
                 
                 with gr.Group():
                     gr.Markdown("### Step 2: File Configuration(upload Files or Folder)")
-                    with gr.Tab("upload files"):
+                    with gr.Tab("upload Files"):
                         file_upload = gr.File(
                             label="Upload Files",
                             file_count="multiple",
@@ -173,64 +182,104 @@ class WebUI:
 
                     with gr.Row():
                         question_prompt = gr.Textbox(
-                            label="Question Prompt[Optional]",
-                            info="问题生成提示词要求",
+                            label="Question Prompt For Additional Requirement[Optional]",
+                            info="问题生成提示词额外要求[可选]",
                             lines=3,
                             scale=2
                         )
                         answer_prompt = gr.Textbox(
-                            label="Answer Prompt[Optional]",
-                            info="答案生成提示词要求",
+                            label="Answer Prompt For Additional Requirement[Optional]",
+                            info="答案生成提示词额外要求[可选]",
                             lines=3,
                             scale=2
                         )
                         # pass
                     
-                    gr.Markdown("#### Quantity Control")
-                    with gr.Row():
-                        quantity_level = gr.Slider(
-                            label="Quantity Level",
-                            info = "生成数据数量控制(1-5)",
-                            minimum=1,
-                            value= 3,
-                            step=1,
-                            maximum=5
-                        )
-                            
+                    with gr.Accordion("Quantity Control",open=False):
+                        with gr.Row():
+                            quantity_level = gr.Slider(
+                                label="Quantity Level",
+                                info = "生成数据数量控制(1-5)",
+                                minimum=1,
+                                value= 3,
+                                step=1,
+                                maximum=5
+                            )
+                            max_nums = gr.Slider(
+                                label="Max Nums",
+                                info = "最大生成数据数量",
+                                minimum=1,
+                                step=1,
+                                value=10000,
+                                maximum=1e5,
+                                interactive=True
+                            )
+                    with gr.Accordion("Diversity Control",open=False):
+                        with gr.Row():
+                            diversity_mode = gr.Radio(
+                                label="Diversity Mode",
+                                choices=["basic", "persona"],
+                                value="basic",
+                                scale=1
+                            )
+                            temperature = gr.Slider(
+                                label="Temperature",
+                                minimum=0,
+                                maximum=2,
+                                value=1,
+                                step=0.1,
+                            )
+                    with gr.Accordion("Quality Control",open=False):
+                        with gr.Row():
+                            verify_qa = gr.Checkbox(
+                                label="Verify QA",
+                                value=False,
+                                info="是否进行答案验证",
+                            )
+                    with gr.Accordion("RAG",open=False) as rag_accordion:
+                        with gr.Row():
+                            enable_rag = gr.Checkbox(
+                                label="Enable RAG",
+                                value=False,
+                                info="是否启用RAG",
+                                interactive=True
+                            )
+                        with gr.Row():
+                            rag_model_name = gr.Textbox(
+                                label="Model", 
+                                info="使用的api模型名称",
+                                max_lines=1,
+                                scale=2,
+                                
+                            )
+                        with gr.Row():
+                            rag_base_url = gr.Textbox(
+                                label="RAG Base Url", 
+                                info="api请求地址",
+                                max_lines=1,
+                                scale=2
+                            )
+                            rag_api_key = gr.Textbox(
+                                label="RAG Api Key", 
+                                info="api密钥",
+                                max_lines=1,
+                                type="password",
+                                scale=2
+                            )
+                        
 
-                        max_nums = gr.Slider(
-                            label="Max Nums",
-                            info = "最大生成数据数量",
-                            minimum=1,
-                            step=1,
-                            value=10000,
-                            maximum=1e5,
-                            interactive=True
-                        )
-                    
-                    gr.Markdown("#### Diversity Control")
                     with gr.Row():
-                        diversity_mode = gr.Radio(
-                            label="Diversity Mode",
-                            choices=["basic", "persona"],
-                            value="basic",
+
+                        concurrent_api_requests_num = gr.Number(
+                            label="Concurrent Api Requests Num",
+                            value=1,
+                            info="api并发请求数",
+                            minimum=1,
                             scale=1
                         )
-                        temperature = gr.Slider(
-                            label="Temperature",
-                            minimum=0,
-                            maximum=2,
-                            value=1,
-                            step=0.1,
-                        )
-                    gr.Markdown("#### Quality Control")
-                    with gr.Row():
-                        verify_qa = gr.Checkbox(
-                            label="Verify QA",
-                            value=False,
-                            info="是否进行答案验证",
-                        )
+                        
                     
+                    gr.Markdown("### Saving Configuration")
                     with gr.Row():
                         save_dir = gr.Textbox(
                             label="Save Dir", 
@@ -244,16 +293,7 @@ class WebUI:
                             max_lines=1,
                             scale=2
                         )
-                    with gr.Row():
-
-                        concurrent_api_requests_num = gr.Number(
-                            label="Concurrent Api Requests Num",
-                            value=1,
-                            info="api并发请求数",
-                            minimum=1,
-                            scale=1
-                        )
-
+                
                 with gr.Group():
                     # gr.Markdown("### config")
                     display_config = gr.Textbox(
@@ -267,7 +307,7 @@ class WebUI:
                     config_path, model, base_url, api_key, save_dir, file_path, file_folder, main_theme, \
                     concurrent_api_requests_num, method, file_types, file_name, is_structure_data, text_template, \
                     question_prompt, answer_prompt, max_nums, \
-                    diversity_mode, temperature, verify_qa = args
+                    diversity_mode, temperature, verify_qa, enable_rag, rag_model_name, rag_base_url, rag_api_key = args
                     
                     config_dict = {
                         "api": {
@@ -294,6 +334,14 @@ class WebUI:
                             "diversity_mode": diversity_mode,
                             "temperature": temperature,
                             "verify_qa": verify_qa
+                        },
+                        "rag":{
+                            "enable_rag": enable_rag,
+                            "api": {
+                                "model": rag_model_name,
+                                "base_url": rag_base_url,
+                                "api_key": rag_api_key
+                            }
                         }
                     }
                     return yaml.dump(config_dict, allow_unicode=True, sort_keys=False)
@@ -317,25 +365,26 @@ class WebUI:
                 )
                 
                 def read_from_datas(save_dir,file_name):
-                    save_path = Path(save_dir)/ Path(file_name)
-                    if not save_path.exists():
-                        return pd.DataFrame(
-                            columns=["question", "answer"]
-                        )
-                    else:
-                        if save_path.is_file():
-                            with open(save_path,'r',encoding='utf-8') as f:
-                                datas = json.load(f)
-                            if datas:
-                                df = pd.DataFrame(datas)
-                                if 'input' in df.columns:
-                                    del df['input']
-                                df.rename(columns={'instruction':'question','output':'answer'},inplace=True)
-                                return df.head(100)                   
-                            else:
-                                return pd.DataFrame(
-                                    columns=["question", "answer"]
-                                )
+                    if self.timer_active:
+                        save_path = Path(save_dir)/ Path(file_name)
+                        if not save_path.exists():
+                            return pd.DataFrame(
+                                columns=["question", "answer"]
+                            )
+                        else:
+                            if save_path.is_file():
+                                with open(save_path,'r',encoding='utf-8') as f:
+                                    datas = json.load(f)
+                                if datas:
+                                    df = pd.DataFrame(datas)
+                                    if 'input' in df.columns:
+                                        del df['input']
+                                    df.rename(columns={'instruction':'question','output':'answer'},inplace=True)
+                                    return df.head(100)                   
+                                else:
+                                    return pd.DataFrame(
+                                        columns=["question", "answer"]
+                                    )
 
                 def get_file_path(uploaded_files):
                     if uploaded_files is None:
@@ -365,7 +414,8 @@ class WebUI:
                     file_name, is_structure_data, text_template,
                     question_prompt, answer_prompt,
                     diversity_mode, quantity_level,
-                    temperature, verify_qa
+                    temperature, verify_qa,
+                    enable_rag,rag_model_name,rag_base_url,rag_api_key
                 ):
                     try:
                         config_dict = {
@@ -393,9 +443,17 @@ class WebUI:
                                 "quantity_level": quantity_level,
                                 "temperature": temperature,
                                 "verify_qa": verify_qa
+                            },
+                            "rag": {
+                                "enable_rag": enable_rag,
+                                "api": {
+                                    "model": rag_model_name,
+                                    "base_url": rag_base_url,
+                                    "api_key": rag_api_key
+                                }
                             }
                         }
-                        
+                        self.timer_active = True
                         self.config = Config(config_dict=config_dict)
                         # yield "配置已载入"
                         gr.Info("配置已载入")
@@ -422,7 +480,8 @@ class WebUI:
                     file_path, file_folder, main_theme, concurrent_api_requests_num,
                     method, file_types, file_name, is_structure_data, text_template,
                     question_prompt, answer_prompt,
-                    max_nums, diversity_mode, temperature, verify_qa
+                    max_nums, diversity_mode, temperature, verify_qa,
+                    enable_rag,rag_model_name,rag_base_url,rag_api_key
                 ]:
                     component.change(
                         fn=update_config,
@@ -431,12 +490,24 @@ class WebUI:
                             file_path, file_folder, main_theme, concurrent_api_requests_num,
                             method, file_types, file_name, is_structure_data, text_template,
                             question_prompt, answer_prompt,  max_nums, 
-                            diversity_mode, temperature, verify_qa
+                            diversity_mode, temperature, verify_qa,enable_rag,rag_model_name,rag_base_url,rag_api_key
                         ],
                         outputs=display_config
                     )
 
                 timer = gr.Timer(0.5)
+                
+                def toggle_rag_fields(enable):
+                    return {
+                        rag_accordion: gr.update(open=enable),
+                    }
+                    
+                enable_rag.change(
+                    fn=toggle_rag_fields,
+                    inputs=[enable_rag],
+                    outputs=[rag_accordion]
+                )
+                    
                 timer.tick(self.read_from_logs, outputs=task_output)
                 timer.tick(fn=read_from_datas,inputs=[save_dir,file_name],outputs=display_data)
                 
@@ -449,33 +520,25 @@ class WebUI:
                         file_name, is_structure_data, text_template,
                         question_prompt, answer_prompt,
                         diversity_mode, quantity_level,
-                        temperature, verify_qa
+                        temperature, verify_qa,enable_rag,rag_model_name,rag_base_url,rag_api_key
                     ],
                     outputs=[task_output],
                     queue=True
                 )
                 
-                def toggle_visibility(selected_method):
-                    if selected_method == "genQA":
-                        return gr.update(visible=True), gr.update(visible=False)
-                    elif selected_method == "backtranslation_rewrite":
-                        return gr.update(visible=False), gr.update(visible=True)
-                    else:
-                        return gr.update(visible=False), gr.update(visible=False)
-
                 config_path.submit(
                     fn = self.read_from_configs,
                     inputs=[config_path],
                     outputs=[
                         model, base_url, api_key, save_dir, file_path, file_folder, file_name, 
                         main_theme, concurrent_api_requests_num, method, file_types, is_structure_data, 
-                        text_template, question_prompt, answer_prompt, max_nums
+                        text_template, question_prompt, answer_prompt, max_nums,enable_rag,rag_model_name,rag_base_url,rag_api_key
                         # display_config
                     ]
                 )
-
                 file_upload.change(fn=get_file_path, inputs=file_upload, outputs=file_path)
                 folder_upload.change(fn=get_folder_path, inputs=folder_upload, outputs=file_folder)
+                
         return demo
 
 

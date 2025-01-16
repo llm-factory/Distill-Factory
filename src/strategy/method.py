@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
 from tools.tool import load_datas
+from api.api import *
 from pathlib import Path
-from model.config import FileConfig, GenerationConfig
+from model.config import FileConfig, GenerationConfig,Config
 from common.message import SystemMessage, UserMessage,buildMessages
 
 class TextRetriever(ABC):
@@ -13,18 +14,23 @@ class TextRetriever(ABC):
         pass
 
     @abstractmethod
-    def get_text_from_rag(self, config: FileConfig) -> str:
+    def get_text_from_rag(self, query:str) -> str:
         """Retrieve relevant text chunks using RAG."""
         pass
 class BaseTextRetriever(TextRetriever):
-    def __init__(self, api):
+    def __init__(self, api:API,config:Config):
         self.api = api
+        self.config = config
+        if self.config.enable_rag:
+            self.rag_api = API(config.rag_api_config)
 
     def get_text(self, file_path:Path, config: FileConfig) -> str:
-        return load_datas(file_path, config)
+        return load_datas(file_path, self.config.file_config)
 
-    def get_text_from_rag(self, config: FileConfig) -> str:
-        return 0
+    async def get_text_from_rag(self, queries:List[str],**kwargs) -> str:
+        print("RAG")
+        print(queries)
+        return await self.rag_api.async_chat(queries,retrieve=True,**kwargs)
 
 class Generator(ABC):   
     @abstractmethod
