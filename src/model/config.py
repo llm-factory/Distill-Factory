@@ -86,7 +86,7 @@ class Config:
             chunk_size=file_config_dict.get("chunk_size", 2048),
             file_type=file_config_dict.get("file_type", "txt")
         )
-        logger.error(self.file_config)
+        logger.info(self.file_config)
         self.main_theme: str = self.file_config.main_theme
         self.file_path: List[str] = self.file_config.file_path
         self.file_folder: str = self.file_config.file_folder

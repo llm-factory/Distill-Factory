@@ -19,11 +19,34 @@ DEFAULT_EXTRACTION_PROMPT = """作为一个AI阅读理解助手，你将在下�
 1.每条关键信息必须与标题相关，充分包含标题相关的信息。
 2.每条关键信息必须包括{main_theme}相关字样。
 3.每条关键信息不能重复。
-每条关键信息以'关键'加数字加'::'开头。"""
+"""
+DEFAULT_EXTRACTION_FORMAT="""
+需要使用json格式输出,格式示例如下:
+[
+    {
+        "extraction": "关键信息1"
+    },
+    {
+        "extraction": "关键信息2"
+    },
+]
+"""
 
 DEFAULT_QUESTION_PROMPT = """请基于以下事实，生成{num_questions_per_title}个清晰且能够依据该事实清晰正确回答的问题，问题需要覆盖事实的不同部分或不同维度。
 事实:{extraction}
-问题需包含充分的信息，如关键细节以及关键信息（如具体的名称、时间、地点、事件等），以避免提问模糊或不清晰。禁止使用模糊的指代词(如"这个","那个","它",'这次','这天'等)。每个问题以'问题'加数字加'::'开头。"""
+问题需包含充分的信息，如关键细节以及关键信息（如具体的名称、时间、地点、事件等），以避免提问模糊或不清晰。禁止使用模糊的指代词(如"这个","那个","它",'这次','这天'等)。
+"""
+DEFAULT_QUESTION_FORMAT= """
+需要使用json格式输出,格式示例如下:
+[
+    {
+        "question": "问题1"
+    },
+    {
+        "question": "问题2"
+    },
+]
+"""
 
 DEFAULT_ANSWER_PROMPT = """你是一个AI对话助手，你擅长从文本中提取信息并且高质量地回答人们的问题。
 请根据文本回答问题。
@@ -38,7 +61,7 @@ class BacktransQAGenerator(Generator):
         self.api = api
         self.config = config
         self.title_prompt = title_prompt
-        self.extraction_prompt = extraction_prompt
+        self.extraction_prompt = DEFAULT_EXTRACTION_PROMPT
         self.question_prompt = config.question_prompt
         self.answer_prompt = config.answer_prompt
         self.meaningless_symbols = [' ', '，', '。', '、', '：', '；', '"', '"', ''', ''', '(', ')', '（', '）', '《', '》', '【', '】', '!', '！', '?', '？', '——', '……']
@@ -108,9 +131,7 @@ class BacktransQAGenerator(Generator):
             
             for title in batch_titles:
                 prompt = buildMessages(
-                    SystemMessage(self.extraction_prompt.format(
-                        main_theme=config.main_theme
-                    )),
+                    SystemMessage(self.extraction_prompt.format(main_theme=config.main_theme)+DEFAULT_EXTRACTION_FORMAT),
                     UserMessage(f"文本：{text}\n标题：{title}"
                     )
                 )
@@ -128,7 +149,8 @@ class BacktransQAGenerator(Generator):
                 main_theme_set = jieba.cut_for_search(config.main_theme)
                 main_theme_set = list(";".join(main_theme_set).split(';'))
                 
-                extractions = parse_response(extractions_text,"关键[\d ]::+")
+                extractions = extract_json(extractions_text,"extraction")
+                extractions = [e for es in extractions for e in es]
                 if not extractions:
                     extractions = [extractions_text]
                 extractions = [e for e in extractions if any(theme in e for theme in (main_theme_set + titleset))]
@@ -140,15 +162,15 @@ class BacktransQAGenerator(Generator):
                         question_prompt = DEFAULT_QUESTION_PROMPT + self.question_prompt if self.question_prompt else DEFAULT_QUESTION_PROMPT
                         
                         prompt = buildMessages(
-                            UserMessage(question_prompt.format(extraction=extraction,num_questions_per_title=self.num_questions_per_title))
+                            UserMessage(question_prompt.format(extraction=extraction,num_questions_per_title=self.num_questions_per_title) + DEFAULT_QUESTION_FORMAT)
                         )
                         question_prompts.append(prompt)
                         
                     batch_gen_questions = await self.api.async_chat(question_prompts,temperature=config.temperature)
                     
                     for extraction, gen_questions in zip(batch_extractions, batch_gen_questions):
-                        gen_questions = parse_response(gen_questions,"问题[\d\ ]+::")
-                        valid_questions = await self._validate_questions(gen_questions, config.concurrent_api_requests_num)
+                        gen_questions = extract_json(gen_questions,"question")
+                        valid_questions = await self._validate_questions(*gen_questions, config.concurrent_api_requests_num)
                         logger.debug(f"{'-'*20}Generated Questions{'-'*20}")
                         for q in gen_questions:
                             logger.debug(q)
@@ -243,7 +265,7 @@ class BacktransQAGenerator(Generator):
 
 class backtranslation_rewrite(Strategy):
     def _create_text_retriever(self) -> TextRetriever:
-        return BaseTextRetriever(self.api)
+        return BaseTextRetriever(self.api,self.config)
     
     def _create_qa_generator(self) -> Generator:
         return BacktransQAGenerator(self.api,self.config)

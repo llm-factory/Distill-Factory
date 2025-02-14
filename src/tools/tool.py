@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Optional
+from typing import List, Union, Dict, Optional,Tuple
 import re
 import os
 from pathlib import Path
@@ -31,27 +31,6 @@ def load_datas(file_path: Path,config: Dict) -> List[str]:
                 return textsList
             else:
                 pass # TODO
-# def parse_data(raw_data, config):
-#     """
-#     raw_data: str or dict
-#     return: list[str]
-#     """
-#     if not config.is_structure_data:
-#         return [raw_data]
-
-#     try:
-#         structured_data = load_json(raw_data)
-#         if not structured_data:
-#             return [raw_data]
-            
-#         formatted_text = format_structured_data(
-#             structured_data,
-#             config.text_template
-#         )
-#         return [formatted_text]
-        
-#     except Exception as e:
-#         raise Exception(f"Error: {e}")
 
 def write_json_file(file_path:str, dataset:List[dict]):
     if not os.path.exists(os.path.dirname(file_path)):
@@ -96,22 +75,6 @@ def clean_and_split_reply_list(replies:List[str])-> List[str]:
         cleaned.extend(reply)
     return cleaned
 
-def clean_and_split_question_list(replies:List[str])-> List[str]:
-    cleaned = []
-    pattern = r'问题[\d]+::(.*?)(?=问题[\d]+::|$)'
-    for reply in replies:
-        matches = re.finditer(pattern, reply, re.DOTALL)
-        matches_list = list(matches)
-        questions = []
-        for match in matches_list:
-            question = match.group(1).strip()
-            if question:
-                questions.append(question)
-        cleaned.extend(questions)
-        
-    return cleaned
-        
-
 def clean_and_split_titles(titles:str)-> List[str]:
     titles = titles.split('\n')
     titles = [re.sub(r'^[ :：\.、]?(\d+)[ :：\.、]', '', l) for l in titles]
@@ -127,7 +90,6 @@ def clean_and_split_title_list(titlelist:List[str])->List[str]:
         cleaned.extend(title)
     return cleaned
     
-
 def init_QA_dataset(save_dir,name):
     datas = []
     path = f"{save_dir}/{name}"
@@ -136,7 +98,6 @@ def init_QA_dataset(save_dir,name):
     with open(path, 'w', encoding='utf-8') as file:
         json.dump(datas, file, ensure_ascii=False, indent=2)
         
-
 def save_QA_dataset(questions,answers,save_dir,name,max_nums): 
     path = f"{save_dir}/{name}"
     with open(path, 'r', encoding='utf-8') as file:
@@ -161,8 +122,6 @@ def getFilePaths(config:Config)->List[Path]:
     file = config.file_path
     file_type = config.file_type
     paths = []
-    # print("file:",file)
-    # print("folder",folder)
     if(folder):
         for root, dirs, files in os.walk(folder):
             for file in files:
@@ -172,40 +131,33 @@ def getFilePaths(config:Config)->List[Path]:
         paths.extend(file)
     return paths
 
-def parse_response(response: str, regex_splitter: str = "问题[\d ]+::") -> List[str]:
-    """
-    parse response given regex splitter
-    """
-    responses = []    
-    pattern = rf'(?:{regex_splitter})(.*?)(?={regex_splitter}|$)'
-    matches = re.finditer(pattern, response, re.DOTALL)
-    matches_list = list(matches)
-    for match in matches_list:
-        response = match.group(1).strip("")
-        response = response.lstrip(". :：")
-        if response:
-            responses.append(response)
-    return responses
-
-def parse_responses(responses:List[str], splitter: str = "问题[\d ]+::")->List[str]:
-    cleaned = []
-    for response in responses:
-        cleaned.extend(parse_response(response,splitter))
-    return cleaned
-
-
-def clean_and_split_question_list(replies:List[str])-> List[str]:
-    cleaned = []
-    pattern = r'问题[\d]+::(.*?)(?=问题[\d]+::|$)'
-    for reply in replies:
-        matches = re.finditer(pattern, reply, re.DOTALL)
-        matches_list = list(matches)
-        questions = []
-        for match in matches_list:
-            question = match.group(1).strip()
-            if question:
-                questions.append(question)
-        cleaned.extend(questions)
-        
-    return cleaned
-        
+def extract_json(texts: Union[List[str]|str], *keys: str) -> List[List[str]]:
+    pattern = r'"([^"\\]*(\\.[^"\\]*)*)"'
+    escape_map = {
+        '\n': '\\n', '\t': '\\t', '\b': '\\b',
+        '\f': '\\f', '\r': '\\r', '\\': '\\\\',
+        '"': '\\"'
+    }
+    def escape_string(match):
+        s = match.group(1)        
+        for old, new in escape_map.items():
+            s = s.replace(old, new)
+        return f'"{s}"'    
+    if isinstance(texts,str):
+        texts = [texts]
+    results = {key: [] for key in keys}    
+    for text in texts:
+        st = text.find('[')
+        ed = text.rfind(']')+1
+        text = text[st:ed]
+        text = re.sub(pattern, escape_string, text)
+        try:
+            data = json.loads(text)
+            for item in data:
+                for key in keys:
+                    if key in item:
+                        results[key].append(item[key])
+            return [results[key] for key in keys]
+        except json.JSONDecodeError as e:
+            return [[] for key in keys]
+            # raise ValueError(f"Invalid JSON format: {e}")

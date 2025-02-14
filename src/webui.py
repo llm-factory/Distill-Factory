@@ -11,7 +11,7 @@ import time
 import json
 import pandas as pd
 from multiprocessing import Process, Event
-
+from webui.css import CSS
 
 class WebUI:
     def __init__(self):
@@ -75,227 +75,231 @@ class WebUI:
         return "Error: Config path is empty"
 
     def run(self):
-        with gr.Blocks() as demo:
-
-            gr.Markdown("""## 配置设置""")
-            config_path = gr.Textbox(
-                label="Config Path[Optional]",
-                info="配置文件路径[可选]",
-                scale=2
-            )
-
-            with gr.Column():
-                with gr.Group():
-                    gr.Markdown("""
-                    ### Step 1: API Configuration
-                    """)
+        with gr.Blocks(theme=gr.themes.Default(),css=CSS) as demo:
+                gr.HTML("<h1><center>LlamaFeeder, a synthetic data generator</center></h1>")
+                with gr.Row():
+                    config_path = gr.Textbox(
+                        label="Config Path[Optional]",
+                        info="配置文件路径[可选]",
+                        scale=2
+                    )
+                with gr.Blocks():
                     with gr.Row():
-                        model = gr.Textbox(
-                            label="Model", 
-                            info="使用的api模型名称",
-                            max_lines=1,
-                            scale=2
-                        )
-                    with gr.Row():
-                        base_url = gr.Textbox(
-                            label="Base Url", 
-                            info="api请求地址",
-                            max_lines=1,
-                            scale=2
-                        )
-                        api_key = gr.Textbox(
-                            label="Api Key", 
-                            info="api密钥",
-                            max_lines=1,
-                            type="password",
-                            scale=2
-                        )
-                
-                with gr.Group():
-                    gr.Markdown("### Step 2: File Configuration(upload Files or Folder)")
-                    with gr.Tab("upload Files"):
-                        file_upload = gr.File(
-                            label="Upload Files",
-                            file_count="multiple",
-                            scale=2
-                        )
-                        file_path = gr.Textbox(
-                            label="File Path", 
-                            info="输入文本路径",
-                            max_lines=3,
-                            scale=2
-                        )
-                        
-                    with gr.Tab("upload Folder"):
-                        folder_upload = gr.File(
-                            label="Upload Folder",
-                            file_count="directory",
-                            scale=2
-                        )
-                        file_folder = gr.Textbox(
-                            label="File Folder", 
-                            info="输入文件夹路径",
-                            max_lines=1,
-                            scale=2
-                        )
-                        file_types = gr.Dropdown(
-                            label="File Type",
-                            info="文件类型",
-                            multiselect=True, 
-                            allow_custom_value=True, 
-                            choices=["txt", "json", "md", "rst","pdf","word",],
-                            scale=2
-                        )
-                    
-                    with gr.Row():
-                        main_theme = gr.Textbox(
-                            label="Main Theme", 
-                            info="文本主题",
-                            max_lines=1,
-                            scale=2
-                        )
-                    with gr.Row():
-
-                        is_structure_data = gr.Checkbox(
-                            label="Is Structure Data",
-                            show_label=True,
-                            info="是否为 JSON 格式数据",
-                            value=False,
-                            scale=1
-                        )
-                        text_template = gr.Textbox(
-                            label="Text Template",
-                            info="JSON数据格式化模板",
-                            lines=3,
-                            scale=2
-                        )
-                
-                with gr.Group():
-                    gr.Markdown("### Step 3: Generation Configuration")
-                    with gr.Row():
-                        method = gr.Dropdown(
-                            label="Method",
-                            info="数据生成方式",
-                            choices=["genQA", "backtranslation_rewrite"],
-                            scale=2
-                        )
-
-                    with gr.Row():
-                        question_prompt = gr.Textbox(
-                            label="Question Prompt For Additional Requirement[Optional]",
-                            info="问题生成提示词额外要求[可选]",
-                            lines=3,
-                            scale=2
-                        )
-                        answer_prompt = gr.Textbox(
-                            label="Answer Prompt For Additional Requirement[Optional]",
-                            info="答案生成提示词额外要求[可选]",
-                            lines=3,
-                            scale=2
-                        )
-                        # pass
-                    
-                    with gr.Accordion("Quantity Control",open=False):
+                        with gr.Column():
+                            gr.HTML("<h2>Step 1: API Configuration</h2>")
+                            with gr.Row():
+                                model = gr.Textbox(
+                                    label="Model", 
+                                    info="使用的api模型名称",
+                                    value="gpt-4o-mini",
+                                    max_lines=1,
+                                    scale=2
+                                )
+                                base_url = gr.Textbox(
+                                    label="Base Url", 
+                                    info="api请求地址",
+                                    value="https://api.openai.com",
+                                    max_lines=1,
+                                    scale=2
+                                )
+                                api_key = gr.Textbox(
+                                    label="Api Key", 
+                                    info="api密钥",
+                                    max_lines=1,
+                                    type="password",
+                                    scale=2
+                                )
+                        with gr.Column():
+                            gr.HTML("<h2>Step 2: Saving Configuration</h2>")
+                            with gr.Row():
+                                save_dir = gr.Textbox(
+                                    label="Save Dir", 
+                                    info="保存文件目录",
+                                    value="../example/result",
+                                    max_lines=1,
+                                    scale=2
+                                )
+                                file_name = gr.Textbox(
+                                    label="File Name", 
+                                    info="保存文件名",
+                                    value="dataset.json",
+                                    max_lines=1,
+                                    scale=2
+                                )
+                with gr.Row(equal_height=True):
+                    with gr.Column(elem_classes="gr-column"):
+                        gr.HTML("<h2>Step 3: File Configuration(upload Files or Folder)</h2>")                
+                        with gr.Blocks():
+                            with gr.Tab("Files"):
+                                file_upload = gr.File(
+                                    label="Upload Files",
+                                    file_count="multiple",
+                                    scale=2
+                                )
+                                file_path = gr.Textbox(
+                                    label="File Path", 
+                                    info="输入文本路径",
+                                    value="../example/dataset/Olympics.txt",
+                                    max_lines=3,
+                                    scale=2
+                                )
+                            with gr.Tab("Folder"):
+                                folder_upload = gr.File(
+                                    label="Upload Folder",
+                                    file_count="directory",
+                                    scale=2
+                                )
+                                with gr.Row():
+                                    file_folder = gr.Textbox(
+                                        label="File Folder", 
+                                        info="输入文件夹路径",
+                                        max_lines=1,
+                                        scale=2
+                                    )
+                                with gr.Row():
+                                    file_types = gr.Dropdown(
+                                        label="File Type",
+                                        info="文件类型",
+                                        multiselect=True, 
+                                        allow_custom_value=True, 
+                                        choices=["txt", "json", "md", "rst","pdf","word",],
+                                        scale=2
+                                    )
+                            with gr.Row():
+                                main_theme = gr.Textbox(
+                                    label="Main Theme", 
+                                    info="文本主题",
+                                    max_lines=1,
+                                    scale=2,
+                                    visible=False
+                                )
                         with gr.Row():
-                            quantity_level = gr.Slider(
-                                label="Quantity Level",
-                                info = "生成数据数量控制(1-5)",
-                                minimum=1,
-                                value= 3,
-                                step=1,
-                                maximum=5
-                            )
-                            max_nums = gr.Slider(
-                                label="Max Nums",
-                                info = "最大生成数据数量",
-                                minimum=1,
-                                step=1,
-                                value=10000,
-                                maximum=1e5,
-                                interactive=True
-                            )
-                    with gr.Accordion("Diversity Control",open=False):
-                        with gr.Row():
-                            diversity_mode = gr.Radio(
-                                label="Diversity Mode",
-                                choices=["basic", "persona"],
-                                value="basic",
+                            is_structure_data = gr.Checkbox(
+                                label="Is Structure Data",
+                                show_label=True,
+                                info="是否为 JSON 格式数据",
+                                value=False,
                                 scale=1
                             )
-                            temperature = gr.Slider(
-                                label="Temperature",
-                                minimum=0,
-                                maximum=2,
-                                value=1,
-                                step=0.1,
+                            text_template = gr.Textbox(
+                                label="Text Template",
+                                info="JSON数据格式化模板",
+                                lines=3,
+                                scale=2
                             )
-                    with gr.Accordion("Quality Control",open=False):
-                        with gr.Row():
-                            verify_qa = gr.Checkbox(
-                                label="Verify QA",
-                                value=False,
-                                info="是否进行答案验证",
-                            )
-                    with gr.Accordion("RAG",open=False) as rag_accordion:
-                        with gr.Row():
-                            enable_rag = gr.Checkbox(
-                                label="Enable RAG",
-                                value=False,
-                                info="是否启用RAG",
-                                interactive=True
-                            )
-                        with gr.Row():
-                            rag_model_name = gr.Textbox(
-                                label="Model", 
-                                info="使用的api模型名称",
-                                max_lines=1,
-                                scale=2,
+                    with gr.Column():
+                        gr.HTML("<h2>Step 4: Generation Configuration</h2>")
+                        with gr.Blocks():
+                            with gr.Row():
+                                method = gr.Dropdown(
+                                    label="Method",
+                                    info="数据生成方式",
+                                    value='basic',
+                                    choices=["basic","genQA", "backtranslation_rewrite"],
+                                    scale=2
+                                )
+
+                            with gr.Row():
+                                question_prompt = gr.Textbox(
+                                    label="Question Prompt For Additional Requirement[Optional]",
+                                    info="问题生成提示词额外要求[可选]",
+                                    lines=3,
+                                    scale=2
+                                )
+                                answer_prompt = gr.Textbox(
+                                    label="Answer Prompt For Additional Requirement[Optional]",
+                                    info="答案生成提示词额外要求[可选]",
+                                    lines=3,
+                                    scale=2
+                                )
+                            
+                            with gr.Accordion("Quantity Control",open=False):
+                                with gr.Row():
+                                    quantity_level = gr.Slider(
+                                        label="Quantity Level",
+                                        info = "生成数据数量控制(1-5)",
+                                        minimum=1,
+                                        value= 3,
+                                        step=1,
+                                        maximum=5
+                                    )
+                                    max_nums = gr.Slider(
+                                        label="Max Nums",
+                                        info = "最大生成数据数量",
+                                        minimum=1,
+                                        step=1,
+                                        value=10000,
+                                        maximum=1e5,
+                                        interactive=True
+                                    )
+                            with gr.Accordion("Diversity Control",open=False):
+                                with gr.Row():
+                                    diversity_mode = gr.Radio(
+                                        label="Diversity Mode",
+                                        choices=["basic", "persona"],
+                                        value="basic",
+                                        scale=1
+                                    )
+                                    temperature = gr.Slider(
+                                        label="Temperature",
+                                        minimum=0,
+                                        maximum=2,
+                                        value=1,
+                                        step=0.1,
+                                    )
+                            with gr.Accordion("Quality Control",open=False):
+                                with gr.Row():
+                                    verify_qa = gr.Checkbox(
+                                        label="Verify QA",
+                                        value=False,
+                                        info="是否进行答案验证",
+                                    )
+                            with gr.Accordion("RAG",open=False) as rag_accordion:
+                                with gr.Row():
+                                    enable_rag = gr.Checkbox(
+                                        label="Enable RAG",
+                                        value=False,
+                                        info="是否启用RAG",
+                                        interactive=True
+                                    )
+                                with gr.Row():
+                                    rag_model_name = gr.Textbox(
+                                        label="Model", 
+                                        info="使用的api模型名称",
+                                        max_lines=1,
+                                        scale=2,
+                                        
+                                    )
+                                with gr.Row():
+                                    rag_base_url = gr.Textbox(
+                                        label="RAG Base Url", 
+                                        info="api请求地址",
+                                        max_lines=1,
+                                        scale=2
+                                    )
+                                    rag_api_key = gr.Textbox(
+                                        label="RAG Api Key", 
+                                        info="api密钥",
+                                        max_lines=1,
+                                        type="password",
+                                        scale=2
+                                    )
                                 
-                            )
-                        with gr.Row():
-                            rag_base_url = gr.Textbox(
-                                label="RAG Base Url", 
-                                info="api请求地址",
-                                max_lines=1,
-                                scale=2
-                            )
-                            rag_api_key = gr.Textbox(
-                                label="RAG Api Key", 
-                                info="api密钥",
-                                max_lines=1,
-                                type="password",
-                                scale=2
-                            )
-                        
 
-                    with gr.Row():
+                            with gr.Row():
 
-                        concurrent_api_requests_num = gr.Number(
-                            label="Concurrent Api Requests Num",
-                            value=1,
-                            info="api并发请求数",
-                            minimum=1,
-                            scale=1
-                        )
+                                concurrent_api_requests_num = gr.Number(
+                                    label="Concurrent Api Requests Num",
+                                    value=1,
+                                    info="api并发请求数",
+                                    minimum=1,
+                                    scale=1
+                                )
                         
-                    
-                    gr.Markdown("### Saving Configuration")
-                    with gr.Row():
-                        save_dir = gr.Textbox(
-                            label="Save Dir", 
-                            info="保存文件目录",
-                            max_lines=1,
-                            scale=2
-                        )
-                        file_name = gr.Textbox(
-                            label="File Name", 
-                            info="保存文件名",
-                            max_lines=1,
-                            scale=2
-                        )
                 
-                with gr.Group():
-                    # gr.Markdown("### config")
+
+                    
+                with gr.Row():
                     display_config = gr.Textbox(
                         label="Config",
                         max_lines=20,
@@ -346,20 +350,22 @@ class WebUI:
                     }
                     return yaml.dump(config_dict, allow_unicode=True, sort_keys=False)
 
+
+
                 with gr.Group():
-                    gr.Markdown("### Output")
                     task_output = gr.Textbox(
-                        label="Log Output",
+                        label="LOG",
                         lines=15,
                         max_lines=15,
                         interactive=False,
                         autoscroll=True,
                         show_copy_button=True
                     )
-                    generate_button = gr.Button("Generate Dataset", variant="primary")
-                    # stop_button = gr.Button("Stop", variant="danger")
+                    generate_button = gr.Button("Generate Dataset", variant="primary",elem_classes="generate-button")
+
                 
-                gr.Markdown("### Dataset preview")
+
+                gr.HTML("<h2>Dataset Preview</h2>")
                 display_data = gr.Dataframe(
                     headers=["question", "answer"]
                 )
@@ -453,23 +459,21 @@ class WebUI:
                                 }
                             }
                         }
+                        print(config_dict)
                         self.timer_active = True
                         self.config = Config(config_dict=config_dict)
-                        # yield "配置已载入"
                         gr.Info("配置已载入")
 
                         self.api = API(self.config)
                         Method = StrategyGetter.get_strategy(self.config.method)(self.api,self.config)                        
-                        # yield "数据生成中"
                         gr.Info("数据生成中")
                         
                         questions, answers = await Method.run(
                             config=self.config,
                         )                        
-                        # yield f"数据生成完成。共生成 {len(questions)} 个问答对"
                         gr.Info(f"数据生成完成。共生成 {len(questions)} 个问答对")
                         gr.Info(f"保存路径：{self.config.save_dir}/{self.config.save_file_name}")
-                        
+                        self.logger.info(f"Generation Completed")
                     except Exception as e:
                         self.logger.error(f"Error: {e}")
                         yield f"发生错误: {str(e)}"

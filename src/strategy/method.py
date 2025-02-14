@@ -28,8 +28,6 @@ class BaseTextRetriever(TextRetriever):
         return load_datas(file_path, self.config.file_config)
 
     async def get_text_from_rag(self, queries:List[str],**kwargs) -> str:
-        print("RAG")
-        print(queries)
         return await self.rag_api.async_chat(queries,retrieve=True,**kwargs)
 
 class Generator(ABC):   
@@ -67,11 +65,11 @@ class BaseQAVerifier(Verifier):
             for q,a in zip(batch_questions,batch_answers):
                 prompt = buildMessages(
                         SystemMessage(
-                            "你需要根据提供的文本，判断给定的问答是否“有效”。\n"
+                            "你需要根据提供的文本，判断给定的问题和答案是否“有效”。\n"
                             "有效的问答的标准是：\n"
                             f"问题合理。问题与文本主题 {config.main_theme} 相关，逻辑清晰，不混乱，符合人类习惯。问题中不包含回答等无关信息。\n" 
                             "问题完整，不含有省略、不完整、或出现意外截断情况的问题。\n"
-                            "回答正确，完整。答案可由文本信息支持，与问题所问内容相符，不包含'根据文本内容'等字眼。回答逻辑清晰，不包含无关信息。\n"
+                            "回答正确，完整。答案可由文本信息支持，与问题所问内容相符，不包含,'无法回答','根据文本内容'等字眼。回答逻辑清晰，不包含无关信息。\n"
                             "若符合以上所有标准，则回答“有效”；如果任一条件不满足，则回答“无效”。\n"
                             "请先简述你判断的原因，然后在最后一行输出'有效'或'无效'，不得输出其他信息。"
                         ),
