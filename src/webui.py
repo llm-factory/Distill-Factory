@@ -76,7 +76,7 @@ class WebUI:
 
     def run(self):
         with gr.Blocks(theme=gr.themes.Default(),css=CSS) as demo:
-                gr.HTML("<h1><center>LlamaFeeder, a synthetic data generator</center></h1>")
+                gr.HTML("<h1><center>LlamaFeeder</center></h1>")
                 with gr.Row():
                     config_path = gr.Textbox(
                         label="Config Path[Optional]",
@@ -115,14 +115,12 @@ class WebUI:
                                 save_dir = gr.Textbox(
                                     label="Save Dir", 
                                     info="保存文件目录",
-                                    value="../example/result",
                                     max_lines=1,
                                     scale=2
                                 )
                                 file_name = gr.Textbox(
                                     label="File Name", 
                                     info="保存文件名",
-                                    value="dataset.json",
                                     max_lines=1,
                                     scale=2
                                 )
@@ -373,6 +371,7 @@ class WebUI:
                 def read_from_datas(save_dir,file_name):
                     if self.timer_active:
                         save_path = Path(save_dir)/ Path(file_name)
+                        print(f"save_path:{save_path}")
                         if not save_path.exists():
                             return pd.DataFrame(
                                 columns=["question", "answer"]
@@ -431,7 +430,6 @@ class WebUI:
                                 "api_key": api_key
                             },
                             "file": {
-                                "save_dir": save_dir,
                                 "file_path": file_path,
                                 "file_folder": file_folder,
                                 "main_theme": main_theme,
@@ -442,6 +440,7 @@ class WebUI:
                             "generation": {
                                 "method": method,
                                 "concurrent_api_requests_num": int(concurrent_api_requests_num),
+                                "save_dir": save_dir,
                                 "save_file_name": file_name,
                                 "question_prompt": question_prompt,
                                 "answer_prompt": answer_prompt,
@@ -459,7 +458,6 @@ class WebUI:
                                 }
                             }
                         }
-                        print(config_dict)
                         self.timer_active = True
                         self.config = Config(config_dict=config_dict)
                         gr.Info("配置已载入")

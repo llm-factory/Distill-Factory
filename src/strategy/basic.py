@@ -49,6 +49,8 @@ class BasicQAGenerator(Generator):
         self.config = config
         self.split = self.config.quantity_level >= 4
         self.num_qa = self.config.quantity_level
+        self.question_prompt = config.question_prompt if config.question_prompt else ""
+        self.answer_prompt = config.answer_prompt if config.answer_prompt else ""
         self.text_retriever = BaseTextRetriever(self.api,self.config)
 
     async def generate(self, text: str, config: GenerationConfig) -> Tuple[List[str], List[str]]:
@@ -73,11 +75,11 @@ class BasicQAGenerator(Generator):
             UserMessage(text)
         )
         responses = await self.api.async_chat([prompt],temperature=self.config.temperature)
-        logger.error(f"titles of:{text[:50]}")
-        logger.error(responses)
+        logger.info(f"titles of:{text[:50]}")
+        logger.info(responses)
         titles = clean_and_split_title_list(responses)
-        logger.error(f"{'-'*20}Titles after clean{'-'*20}")
-        logger.error(titles)
+        logger.info(f"{'-'*20}Titles after clean{'-'*20}")
+        logger.info(titles)
         if self.split:
             return await self.splitTitles(titles,config.concurrent_api_requests_num)
         else:
@@ -102,14 +104,14 @@ class BasicQAGenerator(Generator):
             titles = clean_and_split_title_list(titles)
             splitTitles.extend(titles)
         splitTitles = list(set(splitTitles))
-        logger.error(f"{'-'*20}Split Titles{'-'*20}")
-        logger.error(splitTitles)
+        logger.info(f"{'-'*20}Split Titles{'-'*20}")
+        logger.info(splitTitles)
         return splitTitles
     
     async def _generate_qa_pairs(self, text: str, titles: List[str], config: GenerationConfig) -> List[Tuple[List[str], List[str]]]:
         prompts = []
         for title in titles:
-            formatted_prompt = self.qa_prompt.format(num_qa=self.num_qa,title=title) + DEFAULT_QA_FORMAT
+            formatted_prompt = self.qa_prompt.format(num_qa=self.num_qa,title=title) + self.question_prompt + self.answer_prompt +  DEFAULT_QA_FORMAT
             prompt = buildMessages(
                 SystemMessage(formatted_prompt),
                 UserMessage(f"标题: {title}\n文本: {text}")
@@ -117,13 +119,13 @@ class BasicQAGenerator(Generator):
             prompts.append(prompt)
 
         responses = await self.api.async_chat(prompts, temperature=self.config.temperature)
-        logger.error("prompts")
-        logger.error(prompts)
+        logger.info("prompts")
+        logger.info(prompts)
         questions,answers = extract_json(responses,"question","answer")
-        logger.error(f"{'-'*20}Questions{'-'*20}")
-        logger.error(questions)
-        logger.error(f"{'-'*20}Answers{'-'*20}")
-        logger.error(answers)
+        logger.info(f"{'-'*20}Questions{'-'*20}")
+        logger.info(questions)
+        logger.info(f"{'-'*20}Answers{'-'*20}")
+        logger.info(answers)
         return questions,answers
 
 class BasicQAVerifier(Verifier):
@@ -168,8 +170,7 @@ class BasicQA(Strategy):
         return questions, answers
 
     async def process_single_file(self, file_path: str, config: Config) -> Tuple[List[str], List[str]]:
-        texts = self.text_retriever.get_text(Path(file_path), config)
-        
+        texts = self.text_retriever.get_text(Path(file_path), config)        
         all_questions = []
         all_answers = []
         

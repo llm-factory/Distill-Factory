@@ -86,7 +86,6 @@ class Config:
             chunk_size=file_config_dict.get("chunk_size", 2048),
             file_type=file_config_dict.get("file_type", "txt")
         )
-        logger.info(self.file_config)
         self.main_theme: str = self.file_config.main_theme
         self.file_path: List[str] = self.file_config.file_path
         self.file_folder: str = self.file_config.file_folder
@@ -139,15 +138,15 @@ class Config:
         rag_conf_dict = self.conf_dict.get("rag", {})
         self.enable_rag = rag_conf_dict.get("enable_rag", False)
         self.rag_api_config = rag_conf_dict.get("api", None)
-        
-        self.rag_api_key = self.rag_api_config.get("api_key", None)
-        self.rag_model_name = self.rag_api_config.get("model", None)
-        self.rag_temperature = self.rag_api_config.get("temperature", 1.0)
-        self.rag_base_url = self.rag_api_config.get("base_url", None)
-        self.rag_config = RagConfig(
-            enable_rag=self.enable_rag,
-            rag_api_config=self.rag_api_config
-        )
+        if self.rag_api_config:
+            self.rag_api_key = self.rag_api_config.get("api_key", None)
+            self.rag_model_name = self.rag_api_config.get("model", None)
+            self.rag_temperature = self.rag_api_config.get("temperature", 1.0)
+            self.rag_base_url = self.rag_api_config.get("base_url", None)
+            self.rag_config = RagConfig(
+                enable_rag=self.enable_rag,
+                rag_api_config=self.rag_api_config
+            )
         
         if self.enable_rag and not self.rag_api_config:
             raise ValueError("rag api config is required if enable rag")
