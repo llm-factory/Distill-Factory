@@ -4,6 +4,7 @@ LlamaFeeder 是一个微调数据集生成工具，可以从文本内容中自�
 
 <video width="600" controls>   <source src="assets/example_zh.mp4" type="video/mp4"> </video>
 
+https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 ## 功能特点
 
 - 支持多种数据源输入：单文件、多文件、JSON 文件。
