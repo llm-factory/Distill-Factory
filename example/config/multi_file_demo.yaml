@@ -6,8 +6,8 @@ file:
   file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
   file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
   main_theme: "LLaMA-Factory使用文档"
-  save_dir: "../example/result"
-  save_file_name: "multi_file_demo_QA.json"
 generation:
   method: "genQA"
   concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "multi_file_demo_QA.json"
