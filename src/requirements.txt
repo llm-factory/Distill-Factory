@@ -1,8 +1,0 @@
-gradio
-jieba
-loguru
-openai
-pydantic
-PyYAML
-tqdm
-typing_extensions

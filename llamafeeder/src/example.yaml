@@ -1,0 +1,15 @@
+api:
+  model: "gpt-4o-mini"
+  base_url: "https://openrouter.ai/api/v1"
+  api_key: "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"
+file:
+  is_structure_data: True 
+  file_path: "../example/dataset/dataset.json"
+  text_template: "【标题】: {title}\n{source}在{date}提出：\n{content}"
+  main_theme: "科普知识"
+
+generation:
+  method: "basic"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "test.json"

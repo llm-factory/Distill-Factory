@@ -1,0 +1,14 @@
+api:
+  model:
+  base_url:
+  api_key:
+file:
+  is_structure_data: True 
+  file_path: "../example/dataset/dataset.json"
+  text_template: "【标题】: {title}\n{source}在{date}提出：\n{content}"
+  main_theme: "科普知识"
+generation:
+  method: "basic"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "test.json"
