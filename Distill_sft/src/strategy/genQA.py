@@ -10,44 +10,15 @@ import logging
 import re
 from tqdm import tqdm
 import random
-
+from common.prompts import *
 logger = logging.getLogger('logger')
-
-DEFAULT_TITLE_PROMPT = """你是一个优秀的文本阅读与信息提炼助手。请根据下面提供的文本内容，提取出多个精准且具有针对性的小标题。这些小标题应满足以下要求：
-1. 每个小标题必须包含确切的时间（若文本中有提及），地点，人物名称，事件名称或组织名称等具体信息。
-2. 小标题必须清晰明了，不含模糊表达或歧义性描述。
-3. 小标题应从整体上覆盖文本中的核心主题及重要信息点，确保不遗漏关键事件。
-4. 每个小标题独占一行，不要有其他信息。
-5. 直接输出小标题，不要有其他信息。"""
-
-DEFAULT_QUESTION_REQ_PROMPT = """要求如下：
-1. 问题必须包括完整的信息以避免模糊，例如：具体的人物、名称、事件、时间等。
-2. 问题应当客观、具体，避免模糊不清。
-3. 问题需基于客观事实，不得包含主观感受、预测或想象。问题应当能在文本中找到答案
-4. 确保问题内容不重复，包含不同类型的问题并且覆盖文本的不同部分或不同维度
-""" 
-
-DEFAULT_QUESTION_FORMAT= """
-需要使用json格式输出,格式示例如下:
-[
-    {
-        "question": "问题1"
-    },
-    {
-        "question": "问题2"
-    },
-]
-"""
-
-
-DEFAULT_ANSWER_PROMPT = """你是一位专业的AI助手。请根据以下文本内容回答问题。对于无法回答的问题，请回复'无法回答'。"""
 
 class TwoStageQAGenerator(Generator):
     def __init__(self, api, config):
         self.api = api
-        self.title_prompt = DEFAULT_TITLE_PROMPT
+        self.title_prompt = DEFAULT_TITLE_EXTRACTION_PROMPT
         self.question_prompt = config.question_prompt
-        self.answer_prompt = config.answer_prompt
+        self.answer_prompt = config.answer_prompt if config.answer_prompt else DEFAULT_ANSWER_PROMPT
         self.config = config
         self.split = self.config.quantity_level >= 4
         self.num_questions_per_title = self.config.quantity_level
@@ -74,7 +45,7 @@ class TwoStageQAGenerator(Generator):
             logger.debug(f"{'-'*20}Titles{'-'*20}")
             logger.debug(batch_titles)
             for title in batch_titles:
-                prompt_template = (config.question_prompt or DEFAULT_QUESTION_REQ_PROMPT) + DEFAULT_QUESTION_FORMAT
+                prompt_template = (config.question_prompt or DEFAULT_QUESTION_REQUIREMENT_PROMPT) + DEFAULT_QUESTION_FORMAT
                 formatted_prompt = f"""
 你对{config.main_theme}相关内容十分感兴趣。请您根据以下文本内容，围绕'{config.main_theme}'提出{self.num_questions_per_title}个清晰、客观的问题，"
 这些问题必须紧密围绕'{title}'，且可以在文本中找到明确的答案。\n"""+prompt_template
@@ -163,10 +134,10 @@ class TwoStageQAGenerator(Generator):
             for i in range(len(batch_titles)):
                 prompt = buildMessages(
                         SystemMessage(
-                        f"你是一个擅长划分标题的助手。以下是一个标题,该标题可能包含多个事实，不够简洁。对于包含多个事实的标题你需要将该标题划分为多个小标题,每个小标题要包含原标题中的核心信息和一部分有效信息，不能改变原意，每个小标题一行,不输出额外信息。对于已经足够简洁的标题，则输出原标题。"    
+                            DEFAULT_TITLE_SPLITTING_PROMPT
                         ),
                         UserMessage(
-                            f"""标题: {batch_titles[i]}\n 只输出划分后的小标题或者原标题，不要有其他信息。"""
+                            DEFAULT_TITLE_SPLITTING_TEMPLATE.format(title=batch_titles[i])
                         )
                     
                 )

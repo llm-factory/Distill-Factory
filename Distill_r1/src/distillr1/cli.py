@@ -33,8 +33,6 @@ class Command(str, Enum):
 def main():
     loop = asyncio.get_event_loop()    
     command = sys.argv.pop(1) if len(sys.argv) != 1 else None
-    # print(sys.argv)
-    # print(command)
     try:
         if command == Command.deploy:
             run_api()

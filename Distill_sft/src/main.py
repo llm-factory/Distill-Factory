@@ -4,10 +4,9 @@ import asyncio
 from model.config import Config
 from api.api import API
 from strategy.getter import StrategyGetter
-from tools.tool import read_file, save_QA_dataset
 from log.logger import Logger
     
-async def main():
+async def run_exp():
     parser = argparse.ArgumentParser(description="载入配置文件")
     parser.add_argument("config", type=str, help="filename of config")
     args = parser.parse_args()
@@ -19,7 +18,7 @@ async def main():
     
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_exp())
     
     
     

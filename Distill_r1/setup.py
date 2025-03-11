@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="llamafeeder",
+    name="distillr1",
 
     entry_points={
         'console_scripts': [
-            'llamafeeder-cli=llamafeeder.cli:main',
+            'distillr1-cli=distillr1.cli:main',
         ],
     },
 )

@@ -76,7 +76,7 @@ class WebUI:
 
     def run(self):
         with gr.Blocks(theme=gr.themes.Default(),css=CSS) as demo:
-                gr.HTML("<h1><center>LlamaFeeder</center></h1>")
+                gr.HTML("<h1><center>Distill-sft</center></h1>")
                 with gr.Row():
                     config_path = gr.Textbox(
                         label="Config Path[Optional]",
@@ -547,8 +547,8 @@ class WebUI:
 ui = WebUI()
 demo = ui.run() 
 
-def main():
+def run_webui():
     demo.launch()
 
 if __name__ == '__main__':
-    main()
+    run_webui()

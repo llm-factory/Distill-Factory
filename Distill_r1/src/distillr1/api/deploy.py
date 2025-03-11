@@ -56,4 +56,3 @@ def run(args):
 def run_api(args: Optional[Dict[str, Any]] = None) -> None:
     args = read_args(args)
     run(args)
-    print("API running...")

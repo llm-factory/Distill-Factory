@@ -9,52 +9,16 @@ import asyncio
 import logging
 import jieba
 from tqdm import tqdm
-
+from common.prompts import *
 logger = logging.getLogger('logger')
-
-DEFAULT_TITLE_PROMPT = """你是一个优秀的文本阅读助手，请根据所给文本提取多个具有针对性的小标题。小标题必须包含具体的准确信息，例如准确的时间、地点、人物、名称、事件等。注意，你所提取的小标题不能指向模糊，不能有歧义。每个小标题一行，不要有重复."""
-
-DEFAULT_EXTRACTION_PROMPT = """作为一个AI阅读理解助手，你将在下列给定文本中，提取与给定标题相关的关键信息
-你必须严格遵循以下规则：
-1.每条关键信息必须与标题相关，充分包含标题相关的信息。
-2.每条关键信息必须包括{main_theme}相关字样。
-3.每条关键信息不能重复。
-"""
-DEFAULT_EXTRACTION_FORMAT="""
-需要使用json格式输出,格式示例如下:
-[
-    {
-        "extraction": "关键信息1"
-    },
-    {
-        "extraction": "关键信息2"
-    },
-]
-"""
 
 DEFAULT_QUESTION_PROMPT = """请基于以下事实，生成{num_questions_per_title}个清晰且能够依据该事实清晰正确回答的问题，问题需要覆盖事实的不同部分或不同维度。
 事实:{extraction}
 问题需包含充分的信息，如关键细节以及关键信息（如具体的名称、时间、地点、事件等），以避免提问模糊或不清晰。禁止使用模糊的指代词(如"这个","那个","它",'这次','这天'等)。
 """
-DEFAULT_QUESTION_FORMAT= """
-需要使用json格式输出,格式示例如下:
-[
-    {
-        "question": "问题1"
-    },
-    {
-        "question": "问题2"
-    },
-]
-"""
-
-DEFAULT_ANSWER_PROMPT = """你是一个AI对话助手，你擅长从文本中提取信息并且高质量地回答人们的问题。
-请根据文本回答问题。
-回答中不要出现'根据文本'，'文本提到','文本中'等字样。"""
-
 class BacktransQAGenerator(Generator):
     def __init__(self, api,config,
-                 title_prompt: str = DEFAULT_TITLE_PROMPT,
+                 title_prompt: str = DEFAULT_TITLE_EXTRACTION_PROMPT,
                  extraction_prompt: str = DEFAULT_EXTRACTION_PROMPT,
                  question_prompt: str = DEFAULT_QUESTION_PROMPT,
                  answer_prompt: str = DEFAULT_ANSWER_PROMPT):
@@ -106,10 +70,10 @@ class BacktransQAGenerator(Generator):
             for i in range(len(batch_titles)):
                 prompt = buildMessages(
                         SystemMessage(
-                        f"你是一个擅长划分标题的助手。以下是一个标题,该标题可能包含多个事实，不够简洁。对于包含多个事实的标题你需要将该标题划分为多个小标题,每个小标题要包含原标题中的核心信息和一部分有效信息，不能改变原意，每个小标题一行,不输出额外信息。对于已经足够简洁的标题，则输出原标题。"    
+                            DEFAULT_TITLE_SPLITTING_PROMPT
                         ),
                         UserMessage(
-                            f"""标题: {batch_titles[i]}\n 只输出划分后的小标题或者原标题，不要有其他信息。"""
+                            DEFAULT_TITLE_SPLITTING_TEMPLATE.format(title=batch_titles[i])
                         )
                     
                 )
@@ -190,14 +154,7 @@ class BacktransQAGenerator(Generator):
             
             for q in batch_questions:
                 prompt = buildMessages(
-                    UserMessage(f"""请判断下列问题是否是无效提问，无效提问的特征如下：
-1.非疑问句，包含提问以外的答案、回答、转述原文、错误信息、自言自语、道歉等无意义信息。
-2.问题逻辑不通顺，提问方式不自然, 自相矛盾。出现了"文本","根据文本"等字样。
-3.提问风格、提问重点或表达方式奇怪，与人类习惯有明显差异。
-4.指代不明，问题中包含了指向不明的代词，如"这个"、"那个"、"它"、"本次"、"今天"等。
-具有以上任一特征的都会被视为无效提问。
-问题:{q}
-请先给出简要的打分理由，然后在最后一行输出判断'【无效】'或'【有效】'""")
+                    UserMessage(DEFAULT_JUDGE_PROMPT.format(question=q))
                 )
                 validation_prompts.append(prompt)
             
@@ -218,10 +175,8 @@ class BacktransQAGenerator(Generator):
             for question in batch_questions:
                 
                 prompt = buildMessages(
-                    SystemMessage(answer_prompt+ """注意：如果问题指代不明，例如包含('这','他','那次'等)代词，或无法从文本获取答案，则输出"无法回答"。"""
-                                  + self.answer_prompt if self.answer_prompt else DEFAULT_ANSWER_PROMPT+ """注意：如果问题指代不明，例如包含('这','他','那次'等)代词，或无法从文本获取答案，则输出"无法回答"。"""
-                                  ),
-                    UserMessage(f"文本：{text}\n问题：{question}" + self.answer_prompt if self.answer_prompt else f"文本：{text}\n问题：{question}")
+                    SystemMessage(DEFAULT_ANSWER_PROMPT + self.answer_prompt if self.answer_prompt else DEFAULT_ANSWER_PROMPT),
+                    UserMessage(DEFAULT_QUESTION_ANSWERING_TEMPLATE.format(text=text,question=question))
                 )
                 prompts.append(prompt)
                 
@@ -247,7 +202,7 @@ class BacktransQAGenerator(Generator):
             
             for q in batch_questions:
                 prompt = buildMessages(
-                    SystemMessage("你是一个擅长阅读文本，回答人类问题的AI助手,请回答以下用户提问。"),
+                    SystemMessage(""),
                     UserMessage(f"""文本：{text}
 问题：{q}
 请根据所给文本高质量地回答上述问题，回答应正确、通顺、清晰，据有深度。不应出现"根据文本","文本中"等字眼。""" + self.answer_prompt)

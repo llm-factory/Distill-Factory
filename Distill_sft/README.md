@@ -1,6 +1,6 @@
-# LlamaFeeder
+# Distill-sft
 
-LlamaFeeder 是一个微调数据集生成工具，可以从文本内容中自动生成质量稳定，多样性高的微调数据集。支持单文件、多文件以及 JSON 格式文件处理以及命令行，WebUI两种使用方式。LlamaFeeder 通过调用 api 来分析文本并生成多样化的问答对，支持多种数据生成策略。此外，用户也可以通过修改、扩展、自定义数据生成策略以适应不同类型的文本特点，提高生成质量。
+Distill-sft 是一个微调数据集生成工具，可以从文本内容中自动生成质量稳定，多样性高的微调数据集。支持单文件、多文件以及 JSON 格式文件处理以及命令行，WebUI两种使用方式。Distill-sft 通过调用 api 来分析文本并生成多样化的问答对，支持多种数据生成策略。此外，用户也可以通过修改、扩展、自定义数据生成策略以适应不同类型的文本特点，提高生成质量。
 
 <video width="600" controls>   <source src="assets/example_zh.mp4" type="video/mp4"> </video>
 
@@ -10,11 +10,10 @@ https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 - 支持多种数据源输入：单文件、多文件、JSON 文件。
 - 提供 WebUI 和命令行两种使用方式。
 - 支持异步 API 请求，提高数据生成效率。
-- 支持开源大模型与闭源大模型接入。开源模型推荐使用 [imitater](https://github.com/the-seeds/imitater) 接入。闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
+- 支持开源大模型与闭源大模型接入。开源模型推荐使用 [vllm serve](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html?ref=blog.mozilla.ai#cli-reference) 进行部署 。闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
 
 - 多种数据生成策略：
   - 基础问答生成 (genQA)：从文本中提取标题,根据标题生成相关问答对。
-  - 角色化问答生成 (genQA_persona)：从文本中提取标题,根据标题基于不同角色视角生成相关问答对。
   - 回译重写生成 (backtranslation_rewrite)：通过回译和重写生成相关问答对。
   - 支持修改、扩展、自定义数据生成策略。
 
@@ -23,8 +22,9 @@ https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 ### 安装
 
 ```bash
-git clone https://github.com/the-seeds/LlamaFeeder.git
-cd LlamaFeeder/src # 切换到 src 文件夹，下面所有指令均以此为相对路径
+git clone https://github.com/llm-factory/Distill-Factory.git
+
+cd Distill-sft/src # 切换到 src 文件夹，下面所有指令均以此为相对路径
 pip install -r requirements.txt
 ```
 

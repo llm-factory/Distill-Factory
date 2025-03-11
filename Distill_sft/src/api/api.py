@@ -53,13 +53,11 @@ class API(BaseOpenAI):
                 "query": query,
                 **kwargs
             }
-            print("body:",body)
             result = self.client.post(
                 path="/retrieve",
                 cast_to=object,
                 body=body
             )
-            print(result)
             return result["choices"][0]["message"]["content"]
         else:
             result = self.client.chat.completions.create(
@@ -77,7 +75,6 @@ class API(BaseOpenAI):
     
     async def async_get_api_reply(self,messages:List[BaseMessage], retrieve = False,**kwargs) -> str:
         if retrieve:
-            print(retrieve)
             query = ""
             for message in messages:
                 if message["role"] == "user":

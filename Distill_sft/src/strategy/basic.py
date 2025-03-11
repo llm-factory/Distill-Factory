@@ -10,15 +10,9 @@ import logging
 from pathlib import Path
 import json
 from tqdm import tqdm
+from common.prompts import *
 
 logger = logging.getLogger('logger')
-
-DEFAULT_TITLE_PROMPT = """你是一个优秀的文本阅读与信息提炼助手。请根据下面提供的文本内容，提取出多个精准且具有针对性的小标题。这些小标题应满足以下要求：
-1. 每个小标题必须包含确切的时间（若文本中有提及），地点，人物名称，事件名称或组织名称等具体信息。
-2. 小标题必须清晰明了，不含模糊表达或歧义性描述。
-3. 小标题应从整体上覆盖文本中的核心主题及重要信息点，确保不遗漏关键事件。
-4. 每个小标题独占一行，不要有其他信息。
-5. 直接输出小标题，不要有其他信息。"""
 
 DEFAULT_QA_REQ_PROMPT = """请根据所给文本指向{title}提出{num_qa}条问题并回答对应的答案。要求如下：
 1. 问题必须包括完整的信息以避免模糊，例如：具体的人物、名称、事件、时间等。
@@ -44,7 +38,7 @@ DEFAULT_QA_FORMAT = """
 class BasicQAGenerator(Generator):
     def __init__(self, api, config):
         self.api = api
-        self.title_prompt = DEFAULT_TITLE_PROMPT
+        self.title_prompt = DEFAULT_TITLE_EXTRACTION_PROMPT
         self.qa_prompt = DEFAULT_QA_REQ_PROMPT
         self.config = config
         self.split = self.config.quantity_level >= 4
