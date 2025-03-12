@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import json
+import torch
 from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Dict, Literal, Optional, Union
 from typing_extensions import Self
@@ -113,7 +114,54 @@ class ModelArguments(VllmArguments):
         default=None,
         metadata={"help": "The API key for api call."},
     )
-    
+    use_fast_tokenizer: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use one of the fast tokenizer (backed by the tokenizers library)."},
+    )
+    split_special_tokens: bool = field(
+        default=False,
+        metadata={"help": "Whether or not the special tokens should be split during the tokenization process."},
+    )
+    model_max_length: Optional[int] = field(
+        default=None,
+        init=False,
+        metadata={"help": "The maximum input length for model, derived from `cutoff_len`. Do not specify it."},
+    )
+    block_diag_attn: bool = field(
+        default=False,
+        init=False,
+        metadata={"help": "Whether use block diag attention or not, derived from `neat_packing`. Do not specify it."},
+    )
+    new_special_tokens: Optional[str] = field(
+        default=None,
+        metadata={"help": "Special tokens to be added into the tokenizer. Use commas to separate multiple tokens."},
+    )
+    compute_dtype: Optional[torch.dtype] = field(
+        default=None,
+        init=False,
+        metadata={"help": "Torch data type for computing model outputs, derived from `fp/bf16`. Do not specify it."},
+    )
+    device_map: Optional[Union[str, dict[str, Any]]] = field(
+        default=None,
+        init=False,
+        metadata={"help": "Device map for model placement, derived from training stage. Do not specify it."},
+    )
+    low_cpu_mem_usage: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use memory-efficient model loading."},
+    )
+    use_cache: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use KV cache in generation."},
+    )   
+    use_unsloth: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to use unsloth's optimization for the LoRA training."},
+    )
+    mixture_of_depths: Optional[Literal["convert", "load"]] = field(
+        default=None,
+        metadata={"help": "Convert the model to mixture-of-depths (MoD) or load the MoD model."},
+    )
     
     def __post_init__(self):
         if self.model_name_or_path is None:

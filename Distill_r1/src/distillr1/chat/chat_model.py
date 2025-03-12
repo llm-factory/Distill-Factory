@@ -23,7 +23,6 @@ from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Sequenc
 from ..extras.misc import torch_gc
 from ..hparams import get_infer_args
 from .base_engine import BaseEngine,Response
-from .vllm_engine import VllmEngine
 
 
 def _start_background_loop(loop: "asyncio.AbstractEventLoop") -> None:
@@ -44,8 +43,10 @@ class ChatModel:
         model_args, data_args, finetuning_args, generating_args = get_infer_args(args)
         self.engine_type = model_args.infer_backend
         if model_args.infer_backend == "huggingface":
-            raise NotImplementedError("Huggingface backend is not supported yet.")
+            from .hf_engine import HuggingfaceEngine
+            self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
         elif model_args.infer_backend == "vllm":
+            from .vllm_engine import VllmEngine
             self.engine: "BaseEngine" = VllmEngine(model_args, data_args, finetuning_args, generating_args)
         else:
             raise NotImplementedError(f"Unknown backend: {model_args.infer_backend}")

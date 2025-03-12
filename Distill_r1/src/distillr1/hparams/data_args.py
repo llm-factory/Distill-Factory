@@ -49,6 +49,10 @@ class DataArguments:
         default=False,
         metadata={"help": "Overwrite the cached training and evaluation sets."},
     )
+    template: Optional[str] = field(
+        default=None,
+        metadata={"help": "Which template to use for constructing prompts in training and inference."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
