@@ -17,46 +17,57 @@ from typing import Any, Dict, Optional
 
 from transformers import GenerationConfig
 
-
 @dataclass
 class GeneratingArguments:
-    r"""
-    Arguments pertaining to specify the decoding parameters.
-    """
+    r"""Arguments pertaining to specify the decoding parameters."""
 
+    do_sample: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to use sampling, use greedy decoding otherwise."},
+    )
     temperature: float = field(
-        default=1,
+        default=0.95,
         metadata={"help": "The value used to modulate the next token probabilities."},
     )
     top_p: float = field(
-        default=1,
+        default=0.7,
         metadata={
-            "help": "The smallest set of most probable tokens with probabilities that add up to top_p or higher are kept."
+            "help": (
+                "The smallest set of most probable tokens with probabilities that add up to top_p or higher are kept."
+            )
         },
     )
-    max_tokens: int = field(
-        default=4096,
+    top_k: int = field(
+        default=50,
+        metadata={"help": "The number of highest probability vocabulary tokens to keep for top-k filtering."},
+    )
+    num_beams: int = field(
+        default=1,
+        metadata={"help": "Number of beams for beam search. 1 means no beam search."},
+    )
+    max_length: int = field(
+        default=1024,
         metadata={"help": "The maximum length the generated tokens can have. It can be overridden by max_new_tokens."},
     )
-    max_completion_tokens: int = field(
-        default=4096,
+    max_new_tokens: int = field(
+        default=1024,
         metadata={"help": "The maximum numbers of tokens to generate, ignoring the number of tokens in the prompt."},
     )
-    frequency_penalty: Optional[float] = field(
-        default=None,
-        metadata={"help": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."},
+    repetition_penalty: float = field(
+        default=1.0,
+        metadata={"help": "The parameter for repetition penalty. 1.0 means no penalty."},
     )
-    presence_penalty: Optional[float] = field(
-        default=None,
-        metadata={"help": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."},
+    length_penalty: float = field(
+        default=1.0,
+        metadata={"help": "Exponential penalty to the length that is used with beam-based generation."},
     )
-    logprobs: Optional[int] = field(
-        default=False,
-        metadata={"help": "Number of log probabilities to return."},
-    )
-    top_logprobs: Optional[int] = field(
+    default_system: Optional[str] = field(
         default=None,
-        metadata={"help": "An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability. logprobs must be set to true if this parameter is used."},
+        metadata={"help": "Default system message to use in chat completion."},
+    )
+    skip_special_tokens: bool = field(
+        default=True,
+        metadata={"help": "Whether or not to remove special tokens in the decoding."},
     )
 
     def to_dict(self, obey_generation_config: bool = False) -> Dict[str, Any]:

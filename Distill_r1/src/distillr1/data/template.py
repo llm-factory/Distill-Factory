@@ -520,15 +520,11 @@ def get_template_and_fix_tokenizer(tokenizer: "PreTrainedTokenizer", data_args: 
     if template.mm_plugin.__class__.__name__ != "BasePlugin":
         check_version("transformers>=4.45.0")
 
-    # if data_args.train_on_prompt and template.efficient_eos:
-    #     raise ValueError("Current template does not support `train_on_prompt`.")
-
     # if data_args.tool_format is not None:
     #     logger.info_rank0(f"Using tool format: {data_args.tool_format}.")
     #     default_slots = ["{{content}}"] if template.efficient_eos else ["{{content}}", {"eos_token"}]
     #     template.format_function = FunctionFormatter(slots=default_slots, tool_format=data_args.tool_format)
     #     template.format_tools = ToolFormatter(tool_format=data_args.tool_format)
-
     template.fix_special_tokens(tokenizer)
     template.fix_jinja_template(tokenizer)
     return template

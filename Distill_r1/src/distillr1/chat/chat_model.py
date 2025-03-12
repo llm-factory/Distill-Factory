@@ -40,7 +40,7 @@ class ChatModel:
     """
 
     def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
-        model_args, data_args, finetuning_args, generating_args = get_infer_args(args)
+        model_args, data_args, finetuning_args, generating_args,_ = get_infer_args(args)
         self.engine_type = model_args.infer_backend
         if model_args.infer_backend == "huggingface":
             from .hf_engine import HuggingfaceEngine

@@ -27,14 +27,14 @@ from .data_args import DataArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
 from .distill_args import DistillArguments
-
+from .fintuning_args import FinetuningArguments
 
 logger = logging.get_logger(__name__)
 
 check_dependencies()
 
-_INFER_ARGS = [ModelArguments, DataArguments, GeneratingArguments,DistillArguments]
-_INFER_CLS = Tuple[ModelArguments, DataArguments, GeneratingArguments,DistillArguments]
+_INFER_ARGS = [ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
+_INFER_CLS = Tuple[ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
 
 
 def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
@@ -82,8 +82,7 @@ def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
-    model_args, data_args, generating_args,distill_args= _parse_infer_args(args)
-
+    model_args, data_args, generating_args,distill_args,finetuning_args= _parse_infer_args(args)
     if model_args.infer_backend == "vllm":
         if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
             raise ValueError("vLLM only accepts a single adapter. Merge them first.")
@@ -93,7 +92,7 @@ def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _
     _verify_model_args(model_args, data_args)
     _check_extra_dependencies(model_args)
 
-    return model_args, data_args, generating_args,distill_args
+    return model_args, data_args,finetuning_args,generating_args,distill_args
 
 
 def _verify_model_args(

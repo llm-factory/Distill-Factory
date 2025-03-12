@@ -20,7 +20,6 @@ import math
 from typing import TYPE_CHECKING
 
 from ...extras import logging
-from ...extras.constants import RopeScaling
 
 
 if TYPE_CHECKING:
@@ -31,8 +30,9 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
-
 def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_trainable: bool) -> None:
+    print(f"model_args.rope_scaling{model_args.rope_scaling}")
+    
     if model_args.rope_scaling is None:
         return
 
@@ -40,9 +40,13 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_
         logger.warning_rank0("Current model does not support RoPE scaling.")
         return
 
-    rope_kwargs = {"rope_type": getattr(model_args.rope_scaling, "value", model_args.rope_scaling)}  # handle enum
+    rope_type = getattr(model_args.rope_scaling, "value", model_args.rope_scaling)
+    if isinstance(rope_type, object) and not isinstance(rope_type, str):
+        rope_type = str(rope_type)
+    rope_kwargs = {"rope_type": rope_type}
+    
     if model_args.model_max_length is not None:
-        if is_trainable and model_args.rope_scaling == RopeScaling.DYNAMIC:
+        if is_trainable and model_args.rope_scaling == "dynamic":
             logger.warning_rank0(
                 "Dynamic NTK scaling may not work well with fine-tuning. "
                 "See: https://github.com/huggingface/transformers/pull/24653"
@@ -56,16 +60,17 @@ def configure_rope(config: "PretrainedConfig", model_args: "ModelArguments", is_
         logger.info_rank0(f"Enlarge max model length from {current_max_length} to {model_args.model_max_length}.")
         setattr(config, "max_position_embeddings", model_args.model_max_length)
         rope_kwargs["factor"] = float(math.ceil(model_args.model_max_length / current_max_length))
-        if model_args.rope_scaling == RopeScaling.DYNAMIC:
+        if model_args.rope_scaling == "dynamic":
             rope_kwargs["original_max_position_embeddings"] = current_max_length
-        elif model_args.rope_scaling == RopeScaling.LLAMA3:
+        elif model_args.rope_scaling == "llama3":
             rope_kwargs["original_max_position_embeddings"] = current_max_length
             rope_kwargs["low_freq_factor"] = 1.0
             rope_kwargs["high_freq_factor"] = 4.0
     else:
         rope_kwargs["factor"] = 2.0
 
-    setattr(config, "rope_scaling", rope_kwargs)
+    setattr(config, "rope_scaling", dict(rope_kwargs))
+    
     logger.info_rank0(
         f"Using {rope_kwargs['rope_type']} scaling strategy and setting scaling factor to {rope_kwargs['factor']}."
     )

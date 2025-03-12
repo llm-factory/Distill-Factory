@@ -29,6 +29,7 @@ from trl import AutoModelForCausalLMWithValueHead
 from ..extras import logging
 from ..extras.misc import count_parameters, skip_check_imports, try_download_model_from_other_hub
 from .adapter import init_adapter
+from .model_utils.liger_kernel import apply_liger_kernel
 from .model_utils.misc import register_autoclass
 from .model_utils.mod import convert_pretrained_model_to_mod, load_mod_pretrained_model
 from .model_utils.unsloth import load_unsloth_pretrained_model
@@ -73,7 +74,6 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     try:
-        print(f"try loading: {config}")
         tokenizer = AutoTokenizer.from_pretrained(
             model_args.model_name_or_path,
             use_fast=model_args.use_fast_tokenizer,
@@ -89,7 +89,6 @@ def load_tokenizer(model_args: "ModelArguments") -> "TokenizerModule":
             **init_kwargs,
         )
     except Exception as e:
-        print(e)
         raise OSError("Failed to load tokenizer.") from e
 
     patch_tokenizer(tokenizer, model_args)
@@ -125,14 +124,16 @@ def load_model(
     init_kwargs = _get_init_kwargs(model_args)
     config = load_config(model_args)
     patch_config(config, tokenizer, model_args, init_kwargs, is_trainable)
-    # is_trainale=False,not applying liger kernel
+    apply_liger_kernel(config, model_args, is_trainable, require_logits=(finetuning_args.stage not in ["pt", "sft"]))
+
     model = None
     lazy_load = False
     if model_args.use_unsloth:
         if model_args.adapter_name_or_path is not None:
             lazy_load = True
-        # False
-
+        elif is_trainable:
+            model = load_unsloth_pretrained_model(config, model_args)
+    init_kwargs["device_map"] = "auto" # remove quantization
     if model is None and not lazy_load:
         init_kwargs["config"] = config
         init_kwargs["pretrained_model_name_or_path"] = model_args.model_name_or_path
@@ -146,9 +147,12 @@ def load_model(
                 load_class = AutoModelForSeq2SeqLM
             else:
                 load_class = AutoModelForCausalLM
-            # train_from_scratch=False
-            
-            model = load_class.from_pretrained(**init_kwargs)
+
+            if model_args.train_from_scratch:
+                model = load_class.from_config(config, trust_remote_code=model_args.trust_remote_code)
+            else:
+                model = load_class.from_pretrained(**init_kwargs)
+
         if model_args.mixture_of_depths == "convert":
             model = convert_pretrained_model_to_mod(model, config, model_args)
 
@@ -196,5 +200,5 @@ def load_model(
     if model_args.print_param_status and int(os.getenv("LOCAL_RANK", "0")) == 0:
         for name, param in model.named_parameters():
             print(f"name: {name}, dtype: {param.dtype}, device: {param.device}, trainable: {param.requires_grad}")
-
+    print(f"model device{model.device}")
     return model

@@ -18,11 +18,10 @@ def run_exp(args: Optional[Dict[str, Any]] = None) -> None:
     """
     args = read_args(args)
     print(args)
-    model_args,data_args,_ = get_infer_args(args)
-        # Load the dataset
+    model_args, data_args,finetuning_args,generating_args,distill_args= get_infer_args(args)
+
     dataset_module = get_dataset(model_args, data_args)
-    print(dataset_module)
-        # Print dataset statistics
+
     if "train_dataset" in dataset_module:
         train_dataset = dataset_module["train_dataset"]
         logger.info(f"Training dataset size: {len(train_dataset)}")
@@ -32,8 +31,7 @@ def run_exp(args: Optional[Dict[str, Any]] = None) -> None:
         if len(train_dataset) > 0:
             logger.info("First training example:")
             logger.info(train_dataset[0])
-            
-        
+                    
         for question,answer in zip(train_dataset["_prompt"],train_dataset["_response"]):
             print("Q\n")
             print(question)
@@ -51,7 +49,6 @@ def run_exp(args: Optional[Dict[str, Any]] = None) -> None:
             logger.info(f"Evaluation dataset columns: {eval_dataset.column_names}")
         print(eval_dataset)
             
-    # print()
 
-# if __name__ == "__main__":
-#     run_exp()
+if __name__ == "__main__":
+    run_exp()

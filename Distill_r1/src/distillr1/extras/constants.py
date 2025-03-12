@@ -54,14 +54,6 @@ class DownloadSource(str, Enum):
     MODELSCOPE = "ms"
     OPENMIND = "om"
 
-
-class RopeScaling(str, Enum):
-    LINEAR = "linear"
-    DYNAMIC = "dynamic"
-    YARN = "yarn"
-    LLAMA3 = "llama3"
-
-
 def register_model_group(
     models: dict[str, dict[DownloadSource, str]],
     template: Optional[str] = None,

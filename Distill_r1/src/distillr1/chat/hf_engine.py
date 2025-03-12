@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
     from ..data import Template
     from ..data.mm_plugin import AudioInput, ImageInput, VideoInput
-    from ..hparams import DataArguments, GeneratingArguments, ModelArguments
+    from ..hparams import DataArguments, GeneratingArguments, ModelArguments,FinetuningArguments
 
 
 logger = logging.get_logger(__name__)
@@ -51,8 +51,7 @@ class HuggingfaceEngine(BaseEngine):
         generating_args: "GeneratingArguments",
     ) -> None:
         self.name = EngineName.HF
-        # self.can_generate = finetuning_args.stage == "sft"
-        self.can_generate = True
+        self.can_generate = finetuning_args.stage == "sft"
         tokenizer_module = load_tokenizer(model_args)
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]

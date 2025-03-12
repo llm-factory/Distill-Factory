@@ -96,14 +96,14 @@ class ChatCompletionMessage(BaseModel):
 class ChatCompletionRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
-    # tools: Optional[List[FunctionAvailable]] = None
-    # do_sample: Optional[bool] = None
-    # temperature: Optional[float] = None
-    # top_p: Optional[float] = None
-    # n: int = 1
-    # max_tokens: Optional[int] = None
-    # stop: Optional[Union[str, List[str]]] = None
-    # stream: bool = False
+    tools: Optional[List[FunctionAvailable]] = None
+    do_sample: Optional[bool] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    n: int = 1
+    max_tokens: Optional[int] = None
+    stop: Optional[Union[str, List[str]]] = None
+    stream: bool = False
 
 
 class ChatCompletionResponseChoice(BaseModel):

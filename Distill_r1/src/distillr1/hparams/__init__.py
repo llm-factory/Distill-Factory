@@ -15,11 +15,13 @@
 from .data_args import DataArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
+from .fintuning_args import FinetuningArguments
 from .parser import read_args, get_infer_args
 
 
 __all__ = [
     "DataArguments",
+    "FinetuningArguments",
     "GeneratingArguments",
     "ModelArguments",
     "get_infer_args",
