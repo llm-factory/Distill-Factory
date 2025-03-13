@@ -39,12 +39,17 @@ class ChatModel:
     Async methods: achat(), astream_chat() and aget_scores().
     """
 
-    def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, args: Optional[Dict[str, Any]] = None,model_name_or_path=None,template=None) -> None:
         model_args, data_args, finetuning_args, generating_args,_ = get_infer_args(args)
+        if model_name_or_path is not None:
+            model_args.model_name_or_path = model_name_or_path
+        if template is not None:
+            data_args.template = template
+        
         self.engine_type = model_args.infer_backend
         if model_args.infer_backend == "huggingface":
             from .hf_engine import HuggingfaceEngine
-            self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, finetuning_args, generating_args)
+            self.engine: BaseEngine = HuggingfaceEngine(model_args, data_args, generating_args)
         elif model_args.infer_backend == "vllm":
             from .vllm_engine import VllmEngine
             self.engine: "BaseEngine" = VllmEngine(model_args, data_args, finetuning_args, generating_args)

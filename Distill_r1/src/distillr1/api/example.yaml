@@ -1,4 +1,13 @@
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct
-template: llama3
+model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct,DeepSeek-R1-Distill-Qwen-7B
+model_id: llama,ds
+template: llama3,qwen
 infer_backend: huggingface  # choices: [huggingface, vllm]
 trust_remote_code: true
+
+
+
+# model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct,DeepSeek-R1-Distill-Qwen-7B
+# model_id: llama,ds
+# template: llama3,qwen
+# infer_backend: huggingface  # choices: [huggingface, vllm]
+# trust_remote_code: true

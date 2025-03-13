@@ -17,7 +17,7 @@
 
 import json
 from dataclasses import dataclass, field, fields
-from typing import Any, Dict, Literal, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union, List
 
 import torch
 from transformers.training_args import _convert_str_dict
@@ -154,12 +154,18 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
     """
 
-    model_name_or_path: Optional[str] = field(
+    model_name_or_path: Optional[List[str]] = field(
         default=None,
         metadata={
             "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
         },
     )
+    model_id: Optional[List[str]] = field(
+        default=None,
+        metadata={
+            "help": "Model name for api call, default to 'model_name_or_path'. Use commas to separate multiple models."
+        },
+    ),
     adapter_name_or_path: Optional[str] = field(
         default=None,
         metadata={
@@ -175,7 +181,7 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
     )
     api_key: Optional[str] = field(
         default=None,
-        metadata={"help": "Api key for calling api service"}
+        metadata={"help": "Api key for calling api service, if "}
     )
     base_url: Optional[str] = field(
         default=None,

@@ -16,8 +16,8 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from functools import partial
-from typing import Optional
-
+from typing import Optional,Any,Dict
+from .router import ModelRouter 
 from typing_extensions import Annotated
 # from src.distillr1.chat import ChatModel
 from ..chat import ChatModel
@@ -60,17 +60,18 @@ async def sweeper() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: "FastAPI", chat_model: "ChatModel"):  # collects GPU memory
-    if chat_model.engine.name == EngineName.HF:
-        asyncio.create_task(sweeper())
+async def lifespan(app: "FastAPI", chat_model):  # collects GPU memory
+    # if chat_model.engine.name == EngineName.HF:
+    asyncio.create_task(sweeper())
 
     yield
     torch_gc()
 
 
-def create_app(chat_model: "ChatModel") -> "FastAPI":
+def create_app(args:Optional[Dict[str, Any]] = None) -> "FastAPI":
     root_path = os.getenv("FASTAPI_ROOT_PATH", "")
-    app = FastAPI(lifespan=partial(lifespan, chat_model=chat_model), root_path=root_path)
+    model_router = ModelRouter(args)
+    app = FastAPI(lifespan=partial(lifespan, model_router), root_path=root_path)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -85,15 +86,16 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         if api_key and (auth is None or auth.credentials != api_key):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key.")
 
-    @app.get(
-        "/v1/models",
-        response_model=ModelList,
-        status_code=status.HTTP_200_OK,
-        dependencies=[Depends(verify_api_key)],
-    )
-    async def list_models():
-        model_card = ModelCard(id=os.getenv("API_MODEL_NAME", "gpt-3.5-turbo"))
-        return ModelList(data=[model_card])
+    # @app.get(
+    #     "/v1/models",
+    #     response_model=ModelList,
+    #     status_code=status.HTTP_200_OK,
+    #     dependencies=[Depends(verify_api_key)],
+    # )
+    # async def list_models():
+    #     model_card = ModelCard(id=os.getenv("API_MODEL_NAME", "gpt-3.5-turbo"))
+    #     return ModelList(data=[model_card])
+    # TODO
 
     @app.post(
         "/v1/chat/completions",
@@ -102,33 +104,35 @@ def create_app(chat_model: "ChatModel") -> "FastAPI":
         dependencies=[Depends(verify_api_key)],
     )
     async def create_chat_completion(request: ChatCompletionRequest):
-        if not chat_model.engine.can_generate:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
-
+        print("get request")
+        model_id = request.model
+        print(f"requesting model_id {model_id}")
+        print(f"model_ids {model_router.get_model_ids()}")
+        
+        if model_id not in model_router.get_model_ids():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Model '{model_id}' not found."
+            )    
+        chat_model = model_router.get_model(model_id)
+        print(f"current chat model is: {chat_model}")
+        
         if request.stream:
             generate = create_stream_chat_completion_response(request, chat_model)
             return EventSourceResponse(generate, media_type="text/event-stream", sep="\n")
         else:
             return await create_chat_completion_response(request, chat_model)
-
-    @app.post(
-        "/v1/score/evaluation",
-        response_model=ScoreEvaluationResponse,
-        status_code=status.HTTP_200_OK,
-        dependencies=[Depends(verify_api_key)],
-    )
-    async def create_score_evaluation(request: ScoreEvaluationRequest):
-        if chat_model.engine.can_generate:
-            raise HTTPException(status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail="Not allowed")
-
-        return await create_score_evaluation_response(request, chat_model)
-
     return app
 
 
 def run_api() -> None:
-    chat_model = ChatModel()
-    app = create_app(chat_model)
+    # 仅传入-> 需要的args deploy的args.
+    
+    # chat_model = ChatModel()
+    app = create_app()
+    if app is None:
+        raise ValueError("Failed to create FastAPI app.")
+    
     api_host = os.getenv("API_HOST", "0.0.0.0")
     api_port = int(os.getenv("API_PORT", "8000"))
     print(f"Visit http://localhost:{api_port}/docs for API document.")

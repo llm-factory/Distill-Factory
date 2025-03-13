@@ -9,8 +9,9 @@ from ..api.client import Client
 from .judge import SYSTEM_JUDGE_PROMPT
 import asyncio
 logger = logging.get_logger(__name__)
-
-
+# 逻辑:
+#
+# 
 async def run_exp(args: Optional[Dict[str, Any]] = None,max_try=3) -> None:
     """
     Run data loading experiment with given arguments.
@@ -18,9 +19,12 @@ async def run_exp(args: Optional[Dict[str, Any]] = None,max_try=3) -> None:
     Args:
         args (Optional[Dict[str, Any]]): Optional dictionary of arguments to override defaults
     """
-    args = read_args(args)
     model_args,data_args,generating_args,distill_args = get_infer_args(args)
-    client = Client(model_args.base_url, model_args.api_key)
+    
+    
+    
+    clients = parse_client(args)
+    # client = Client(model_args.base_url, model_args.api_key)
     dataset_module = get_dataset(model_args, data_args)
     print(dataset_module)
     if "train_dataset" in dataset_module:

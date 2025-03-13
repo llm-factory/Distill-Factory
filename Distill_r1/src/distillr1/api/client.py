@@ -2,7 +2,8 @@ import asyncio
 from typing import List, Optional, Union, Any, Dict
 
 from openai import AsyncOpenAI
-
+from api.misc import parse_model_info
+from ..hparams import ModelArguments, DataArguments, get_infer_args, read_args
 from .protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -16,9 +17,8 @@ from .protocol import (
 class Client(AsyncOpenAI):
     def __init__(self, base_url: str, api_key: str, **kwargs):
         super().__init__(base_url=base_url, api_key=api_key, **kwargs)
-        print(base_url)
-        print(api_key)
-
+        self.default_model = kwargs.pop("model", None)
+    
     def _process_messages(self, messages: List[ChatMessage]) -> List[Dict[str, str]]:
         processed_messages = []
         for message in messages:
@@ -31,8 +31,9 @@ class Client(AsyncOpenAI):
             **kwargs
     ) -> "ChatCompletionResponse":
         processed_messages = self._process_messages(request.messages)
+        model = request.model or self.default_model
         response = await self.chat.completions.create(
-            model=request.model,
+            model=model,
             messages=processed_messages,
             **kwargs
         )
@@ -60,18 +61,19 @@ class Client(AsyncOpenAI):
                 total_tokens=response.usage.total_tokens
             )
         )
-
+    
     async def create_chat_from_message(
             self,
             message: str,
-            model: str,
+            model: str=None,
             **kwargs
     ) -> "ChatCompletionResponseChoice":
         """
         Create a chat completion from a single message.
         """
+        model_to_request = model or self.default_model
         request = ChatCompletionRequest(
-            model=model,
+            model=model_to_request,
             messages=[
                 ChatMessage(role="user", content=message)
             ],
@@ -105,3 +107,21 @@ class Client(AsyncOpenAI):
             return True
         else:
             return False
+# TODO
+
+# def parse_client(args:Optional[Dict[str,Any]] = None)-> List[Client]:
+#     """
+#     return : list of client, regardless of whether it is deployed one or a third-party api.
+#     """
+#     # client have the same base url should be regarded as the same client
+#     model_args,data_args,generating_args,distill_args = get_infer_args(args)
+#     clients = []
+#     model_infos = parse_model_info(model_args)
+#     for model_info in model_infos:
+#         if model_info["template"] != "None":
+#             # need to deploy locally
+#         else:
+#             pass
+
+
+
