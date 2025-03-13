@@ -18,13 +18,13 @@ class Client(AsyncOpenAI):
         super().__init__(base_url=base_url, api_key=api_key, **kwargs)
         print(base_url)
         print(api_key)
-    
+
     def _process_messages(self, messages: List[ChatMessage]) -> List[Dict[str, str]]:
         processed_messages = []
         for message in messages:
             processed_messages.append({"role": "user", "content": message.content})
         return processed_messages
-    
+
     async def create_chat_completion_response(
             self,
             request: "ChatCompletionRequest",
@@ -35,7 +35,7 @@ class Client(AsyncOpenAI):
             model=request.model,
             messages=processed_messages,
             **kwargs
-        )        
+        )
         responses = []
         for i in response.choices:
             responses.append(
@@ -60,7 +60,7 @@ class Client(AsyncOpenAI):
                 total_tokens=response.usage.total_tokens
             )
         )
-    
+
     async def create_chat_from_message(
             self,
             message: str,
@@ -76,11 +76,17 @@ class Client(AsyncOpenAI):
                 ChatMessage(role="user", content=message)
             ],
         )
-        
-        response = await self.create_chat_completion_response(request,**kwargs)
+
+        response = await self.create_chat_completion_response(request, **kwargs)
         return response.choices[0]
 
-    async def judge_answer_correctness(self,model_name,question, answer, llm_answer):
+    async def judge_answer_correctness(
+            self,
+            model_name: str,
+            question: str,
+            answer: str,
+            llm_answer: str
+    ) -> bool:
         judge_prompt = f"""
         You are a judge that evaluates the correctness of a solution.
         You are given a question, an answer and a ground truth answer.
@@ -94,7 +100,7 @@ class Client(AsyncOpenAI):
         Please only output \\boxed{{}} in the format of \\boxed{{}}.
         """
 
-        judge_response = await self.create_chat_from_message(judge_prompt,model_name)
+        judge_response = await self.create_chat_from_message(judge_prompt, model_name)
         if '\\boxed{correct}' in judge_response.message.content:
             return True
         else:
