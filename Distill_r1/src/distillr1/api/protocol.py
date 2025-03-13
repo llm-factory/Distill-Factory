@@ -15,7 +15,7 @@
 import time
 from enum import Enum, unique
 from typing import Any, Dict, List, Optional, Union
-
+from dataclasses import dataclass
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
 
@@ -152,3 +152,19 @@ class ScoreEvaluationResponse(BaseModel):
     object: Literal["score.evaluation"] = "score.evaluation"
     model: str
     scores: List[float]
+    
+
+
+class ClientRole(str,Enum):
+    Chat = "chat"
+    Reward = 'reward'
+
+@dataclass
+class ModelInfo:
+    model_name_or_path: str
+    model_id: str
+    allocated_device: List[int]
+    model_param: int
+    template: str
+    role: ClientRole
+    deploy: bool

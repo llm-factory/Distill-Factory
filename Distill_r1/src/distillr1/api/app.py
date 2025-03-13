@@ -126,6 +126,8 @@ def create_app(args:Optional[Dict[str, Any]] = None) -> "FastAPI":
 
 
 def run_api() -> None:
+    # 仅传入-> 需要的args deploy的args.
+    
     # chat_model = ChatModel()
     app = create_app()
     if app is None:

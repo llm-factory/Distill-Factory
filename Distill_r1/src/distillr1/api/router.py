@@ -21,18 +21,9 @@ from ..chat import ChatModel
 from ..extras import logging
 from ..extras.misc import get_device_count
 from dataclasses import dataclass
-
+from enum import Enum
+from .protocol import ModelInfo
 logger = logging.get_logger(__name__)
-
-
-@dataclass
-class ModelInfo:
-    model_name_or_path: str
-    model_id: str
-    allocated_device: List[int]
-    model_param: int
-    template: str
-
 
 class ModelRouter:
     """
@@ -45,7 +36,6 @@ class ModelRouter:
         model_args, data_args,finetuning_args,generating_args,distill_args= get_infer_args(args)
         self.model_args = model_args 
         self.data_args = data_args
-        
         self.chatmodels: Dict[str, ChatModel] = {}
         self.model_args = model_args or {}
         self.available_model_names = []
@@ -54,6 +44,7 @@ class ModelRouter:
         self.model_name_or_paths = getattr(model_args, 'model_name_or_path', None)
         self.model_ids = getattr(model_args, 'model_id', None)
         self.templates = getattr(data_args, 'template', None)
+        self.roles = getattr(model_args, 'roles', ["chat","reward"])
         self.init_router()
         # self.model_roles = self.model_args.get("model_role", []).split(",")
         
@@ -68,8 +59,6 @@ class ModelRouter:
         """
         return self.chatmodels[model_id]
             
-    
-    
     def init_router(self):
         """
         check and Load models.
@@ -125,4 +114,5 @@ def esitimate_model_params(model_name_or_path:str)->int:
     """
     Estimate the number of parameters of the model.
     """
+    # TODO
     return 7
