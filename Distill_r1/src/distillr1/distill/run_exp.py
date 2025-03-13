@@ -44,7 +44,7 @@ async def run_exp(args: Optional[Dict[str, Any]] = None,max_try=3) -> None:
                     train_dataset_reasoner.append({
                         "instruction": question,
                         "input": "",
-                        "output": f"<think>{llm_reason}</think>\n{llm_answer}"
+                        "output": f"<think>\n{llm_reason}\n</think>\n\n{llm_answer}"
                     })
                     with open(distill_args.output_path, "w",encoding='utf-8') as f:
                         json.dump(train_dataset_reasoner,f,ensure_ascii=False,indent=2)      
