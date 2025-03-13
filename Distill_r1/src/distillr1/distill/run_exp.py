@@ -49,5 +49,3 @@ async def run_exp(args: Optional[Dict[str, Any]] = None,max_try=3) -> None:
                     with open(distill_args.output_path, "w",encoding='utf-8') as f:
                         json.dump(train_dataset_reasoner,f,ensure_ascii=False,indent=2)      
                     break
-
-        # TODO: save the dataset
