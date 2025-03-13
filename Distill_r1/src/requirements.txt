@@ -5,4 +5,6 @@ xformers==0.0.28.post3
 xgrammar==0.1.11
 transformers @ git+ssh://git@github.com/huggingface/transformers.git@9985d06add07a4cc691dc54a7e34f54205c04d40
 accelerate==1.4.0
-python 3.11, CUDA 12.1
+rouge
+python==3.11
+CUDA==12.1
