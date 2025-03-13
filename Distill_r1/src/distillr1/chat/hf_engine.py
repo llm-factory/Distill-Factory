@@ -47,18 +47,17 @@ class HuggingfaceEngine(BaseEngine):
         self,
         model_args: "ModelArguments",
         data_args: "DataArguments",
-        finetuning_args: "FinetuningArguments",
         generating_args: "GeneratingArguments",
     ) -> None:
         self.name = EngineName.HF
-        self.can_generate = finetuning_args.stage == "sft"
+        self.can_generate = True
         tokenizer_module = load_tokenizer(model_args)
         self.tokenizer = tokenizer_module["tokenizer"]
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args)
         self.model = load_model(
-            self.tokenizer, model_args, finetuning_args=finetuning_args, is_trainable=False, add_valuehead=(not self.can_generate)
+            self.tokenizer, model_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab
         self.generating_args = generating_args.to_dict()
         try:

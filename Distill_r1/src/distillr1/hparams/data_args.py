@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, Literal, Optional,List
 
 
 @dataclass
@@ -49,7 +49,7 @@ class DataArguments:
         default=False,
         metadata={"help": "Overwrite the cached training and evaluation sets."},
     )
-    template: Optional[str] = field(
+    template: Optional[List[str]] = field(
         default=None,
         metadata={"help": "Which template to use for constructing prompts in training and inference."},
     )
