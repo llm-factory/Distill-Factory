@@ -1,8 +1,21 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, Optional
 
+
 @dataclass
-class CurationArguments:
+class ReasoningCurationArguments:
+    r"""
+    """
+    # TODO
+
+@dataclass
+class ResponseCurationArguments:
+    r"""
+    """
+    # TODO
+
+@dataclass
+class CurationArguments(ReasoningCurationArguments,ResponseCurationArguments):
     """
     Arguments for the synthetic data curation.
     TODO
@@ -29,4 +42,12 @@ class DistillArguments(CurationArguments):
     meta_prompt: Optional[str] = field(
         default="",
         metadata={"help": "The meta prompt for the synthetic dataset."},
+    )
+    enable_reward_model: Optional[bool] = field(
+        default=True,
+        metadata={"help": "Whether or not to enable reward model."},
+    )
+    roll_out_size: Optional[int] = field(
+        default=1,
+        metadata={"help": "The number of roll outs for synthetic data generation."},
     )

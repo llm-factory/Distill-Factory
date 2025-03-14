@@ -16,14 +16,20 @@ import os
 import json
 from typing import Dict, List, Optional, Any
 import copy
-from ..hparams import get_infer_args
+from ..hparams import get_infer_args,ModelArguments,GeneratingArguments,ClientArguments,DataArguments
 from ..chat import ChatModel
 from ..extras import logging
 from ..extras.misc import get_device_count
 from dataclasses import dataclass
 from enum import Enum
-from .protocol import ModelInfo
 logger = logging.get_logger(__name__)
+
+
+@dataclass
+class ModelInfo(ModelArguments,GeneratingArguments,DataArguments):
+    """
+    """
+
 
 class ModelRouter:
     """
@@ -31,22 +37,19 @@ class ModelRouter:
     """
     def __init__(self, args: Optional[Dict[str, Any]] = None):
         """
-
         """
-        model_args, data_args,finetuning_args,generating_args,distill_args= get_infer_args(args)
-        self.model_args = model_args 
+        chatmodel_args_list, data_args,finetuning_args,generating_args,distill_args = get_infer_args(args)
+        self.chatmodel_arg_list = chatmodel_args_list
         self.data_args = data_args
-        self.chatmodels: Dict[str, ChatModel] = {}
-        self.model_args = model_args or {}
-        self.available_model_names = []
-        self.models = []
         self.model_infos = []
-        self.model_name_or_paths = getattr(model_args, 'model_name_or_path', None)
-        self.model_ids = getattr(model_args, 'model_id', None)
-        self.templates = getattr(data_args, 'template', None)
-        self.roles = getattr(model_args, 'roles', ["chat","reward"])
+        self.chatmodels = {}
         self.init_router()
-        # self.model_roles = self.model_args.get("model_role", []).split(",")
+
+    def get_model_infos(self) -> List[ModelInfo]:
+        """
+        return : list of model infos
+        """
+        return self.model_infos
         
     def get_model_ids(self)-> List[str]:
         """
@@ -58,61 +61,43 @@ class ModelRouter:
         Get the model by model_id.
         """
         return self.chatmodels[model_id]
-            
+
     def init_router(self):
         """
         check and Load models.
+        Parse model_infos here
         """
-        if not self.model_name_or_paths:
-            raise ValueError("model_name_or_paths is required.")
-        if not self.model_ids:
-            self.model_ids = self.model_name_or_paths.copy() # model_name_or_path as model_id by default
-            
-        self.model_name_or_paths = self.model_name_or_paths.split(",")
-        print(f"model_name_or_paths: {self.model_name_or_paths}")
-        print(f"model_ids: {self.model_ids}")
-        self.model_ids = self.model_ids.split(",")
-        if len(self.model_ids) != len(self.model_name_or_paths):
-            raise ValueError("model_ids and model_name_or_paths must have the same number of elements.")
-        if not self.templates:
-            raise ValueError("templates is required.")
-        self.templates = self.templates.split(",")
-        
-        for i,(model_name_or_path, model_id) in enumerate(zip(self.model_name_or_paths, self.model_ids)):
-            self.model_infos.append(ModelInfo(model_name_or_path.strip(),model_id.strip(),allocated_device=[],model_param = None,template=self.templates[i]))
-        total_params = 0
-        for model in self.model_infos:
-            model_param = esitimate_model_params(model.model_name_or_path)
-            model.model_param = model_param
-            total_params += model_param
-        self.model_infos.sort(key=lambda x: x.model_param, reverse=True)
-        
-        num_devices = get_device_count()
-        logger.info_rank0(f"Found {num_devices} CUDA device(s)")
-        current_available_device = os.getenv("CUDA_VISIBLE_DEVICES",[i for i in range(num_devices)])
-        if isinstance(current_available_device, str):
-            current_available_device = [int(i) for i in current_available_device.split(",")]
-        logger.info_rank0(f"Available devices: {current_available_device}")
 
-        for i,model_info in enumerate(self.model_infos):
-            model_id = model_info.model_id
+        for i, (model_args, generating_args,data_args) in enumerate(self.chatmodel_arg_list):
             
-            allocate_num = max(1,min(len(current_available_device),round((model_info.model_param / total_params) * num_devices)))
-            model_info.allocated_device = current_available_device[:allocate_num]
-            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join([str(i) for i in model_info.allocated_device])
-            self.chatmodels[model_id] = ChatModel(args=None,model_name_or_path=model_info.model_name_or_path,template=model_info.template) # load model
-            logger.info_rank0(f"model {model_id} is allocated to devices {model_info.allocated_device}")
-            if i == len(self.model_infos) - 1 and len(current_available_device[allocate_num:]) == 0:
-                allocate_num = len(current_available_device)
-            else:              
-                current_available_device = current_available_device[allocate_num:]
-
-        # self.available_model_names = list(self.models.keys())
-        # logger.info_rank0(f"Loaded models: {self.available_model_names}")
-        
-def esitimate_model_params(model_name_or_path:str)->int:
-    """
-    Estimate the number of parameters of the model.
-    """
-    # TODO
-    return 7
+            model_config_dict = {
+                "model_name_or_path": model_args.model_name_or_path.strip(),
+                "model_id": model_args.model_id or model_args.model_name_or_path.strip(),
+                "device": model_args.device,
+                "role": model_args.role,
+                "deploy": model_args.deploy,
+                "base_url": model_args.base_url,
+                "api_key": model_args.api_key,
+                "temperature": generating_args.temperature,
+                "top_p": generating_args.top_p,
+                "top_k": generating_args.top_k,
+                "num_beams": generating_args.num_beams,
+                "max_length": generating_args.max_length,
+                "max_new_tokens": generating_args.max_new_tokens,
+                "repetition_penalty": generating_args.repetition_penalty,
+                "length_penalty": generating_args.length_penalty,
+                "default_system": generating_args.default_system,
+                "skip_special_tokens": generating_args.skip_special_tokens,
+                "template": data_args.template,
+            }
+            model_info = ModelInfo(**model_config_dict)
+            if model_info.deploy or model_info.device:
+                os.environ["CUDA_VISIBLE_DEVICES"] = model_info.device
+                print(model_info.device)
+                self.chatmodels[model_info.model_id] = ChatModel(
+                    args=model_config_dict
+                )
+                logger.info_rank0(f"model {model_info.model_id} is allocated to devices {model_info.device}")
+            else:
+                logger.info_rank0(f"model {model_info.model_id} don't need to be deployed locally")
+            self.model_infos.append(model_info)

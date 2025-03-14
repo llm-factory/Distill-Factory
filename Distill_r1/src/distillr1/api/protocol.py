@@ -158,13 +158,3 @@ class ScoreEvaluationResponse(BaseModel):
 class ClientRole(str,Enum):
     Chat = "chat"
     Reward = 'reward'
-
-@dataclass
-class ModelInfo:
-    model_name_or_path: str
-    model_id: str
-    allocated_device: List[int]
-    model_param: int
-    template: str
-    role: ClientRole
-    deploy: bool

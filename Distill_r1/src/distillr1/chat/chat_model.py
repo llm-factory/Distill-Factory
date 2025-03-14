@@ -21,7 +21,7 @@ from threading import Thread
 from typing import Any, AsyncGenerator, Dict, Generator, List, Optional, Sequence
 
 from ..extras.misc import torch_gc
-from ..hparams import get_infer_args
+from ..hparams import get_infer_args,get_origin_infer_args
 from .base_engine import BaseEngine,Response
 
 
@@ -39,13 +39,8 @@ class ChatModel:
     Async methods: achat(), astream_chat() and aget_scores().
     """
 
-    def __init__(self, args: Optional[Dict[str, Any]] = None,model_name_or_path=None,template=None) -> None:
-        model_args, data_args, finetuning_args, generating_args,_ = get_infer_args(args)
-        if model_name_or_path is not None:
-            model_args.model_name_or_path = model_name_or_path
-        if template is not None:
-            data_args.template = template
-        
+    def __init__(self, args: Optional[Dict[str, Any]] = None) -> None:
+        model_args, data_args, finetuning_args, generating_args,_ = get_origin_infer_args(args)
         self.engine_type = model_args.infer_backend
         if model_args.infer_backend == "huggingface":
             from .hf_engine import HuggingfaceEngine
@@ -92,45 +87,3 @@ class ChatModel:
         Asynchronously gets a list of responses of the chat model.
         """
         return await self.engine.chat(messages, system, tools, images, videos, audios, **input_kwargs)
-
-
-
-
-# def run_chat() -> None:
-#     if os.name != "nt":
-#         try:
-#             import readline  # noqa: F401
-#         except ImportError:
-#             print("Install `readline` for a better experience.")
-
-#     chat_model = ChatModel()
-#     messages = []
-#     print("Welcome to the CLI application, use `clear` to remove the history, use `exit` to exit the application.")
-
-#     while True:
-#         try:
-#             query = input("\nUser: ")
-#         except UnicodeDecodeError:
-#             print("Detected decoding error at the inputs, please set the terminal encoding to utf-8.")
-#             continue
-#         except Exception:
-#             raise
-
-#         if query.strip() == "exit":
-#             break
-
-#         if query.strip() == "clear":
-#             messages = []
-#             torch_gc()
-#             print("History has been removed.")
-#             continue
-
-#         messages.append({"role": "user", "content": query})
-#         print("Assistant: ", end="", flush=True)
-
-#         response = ""
-#         for new_text in chat_model.stream_chat(messages):
-#             print(new_text, end="", flush=True)
-#             response += new_text
-#         print()
-#         messages.append({"role": "assistant", "content": response})

@@ -56,6 +56,7 @@ class HuggingfaceEngine(BaseEngine):
         self.processor = tokenizer_module["processor"]
         self.tokenizer.padding_side = "left" if self.can_generate else "right"
         self.template = get_template_and_fix_tokenizer(self.tokenizer, data_args)
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(model_args.device)
         self.model = load_model(
             self.tokenizer, model_args, is_trainable=False, add_valuehead=(not self.can_generate)
         )  # must after fixing tokenizer to resize vocab

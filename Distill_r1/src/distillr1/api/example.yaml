@@ -1,13 +1,18 @@
-model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct,DeepSeek-R1-Distill-Qwen-7B
-model_id: llama,ds
-template: llama3,qwen
-infer_backend: huggingface  # choices: [huggingface, vllm]
-trust_remote_code: true
+chat:
+  - model_name_or_path: deepseek/deepseek-r1
+    base_url: https://openrouter.ai/api/v1
+    api_key: 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
+    temperature: 0
+    role: chat
+  - model_name_or_path: ../../DeepSeek-R1-Distill-Qwen-7B
+    model_id: ds
+    template: qwen
+    device: "1,2,3,4"
+    base_url: http://10.212.70.132:18996/v1
+    api_key: "123"
+    temperature: 1
+    deploy: true
+    role: reward
 
-
-
-# model_name_or_path: meta-llama/Meta-Llama-3-8B-Instruct,DeepSeek-R1-Distill-Qwen-7B
-# model_id: llama,ds
-# template: llama3,qwen
-# infer_backend: huggingface  # choices: [huggingface, vllm]
-# trust_remote_code: true
+dataset: gaokao_math
+max_samples: 20

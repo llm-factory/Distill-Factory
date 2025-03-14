@@ -14,7 +14,7 @@
 
 import os
 import sys
-from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union
+from typing import TYPE_CHECKING, Dict, Literal, Optional, Sequence, Union,Tuple,List
 
 import numpy as np
 from datasets import DatasetDict, load_dataset, load_from_disk
@@ -198,3 +198,21 @@ def get_dataset(
             dataset_module["eval_dataset"] = eval_dataset
 
     return dataset_module
+
+def get_qa_pairs(
+    model_args: "ModelArguments",
+    data_args: "DataArguments",
+) -> Tuple[List[str],List[str]]:
+    r"""
+    Gets the question-answer pairs from the dataset.
+    """
+    dataset_module = get_dataset(model_args, data_args)
+    if "train_dataset" in dataset_module:
+        train_dataset_reasoner = []
+        train_dataset = dataset_module["train_dataset"]
+        logger.info(f"Source Dataset size: {len(train_dataset)}")
+        logger.info(f"Source Dataset columns: {train_dataset.column_names}")
+        if len(train_dataset) > 0:
+            logger.info("First data example:")
+            logger.info(train_dataset[0])
+        return train_dataset["_prompt"], train_dataset["_response"]

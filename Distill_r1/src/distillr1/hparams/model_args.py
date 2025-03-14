@@ -154,13 +154,13 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
     Arguments pertaining to which model/config/tokenizer we are going to fine-tune or infer.
     """
 
-    model_name_or_path: Optional[List[str]] = field(
+    model_name_or_path: Optional[str] = field(
         default=None,
         metadata={
             "help": "Path to the model weight or identifier from huggingface.co/models or modelscope.cn/models."
         },
     )
-    model_id: Optional[List[str]] = field(
+    model_id: Optional[str] = field(
         default=None,
         metadata={
             "help": "Model name for api call, default to 'model_name_or_path'. Use commas to separate multiple models."
@@ -180,7 +180,7 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         metadata={"help": "The folder containing the adapter weights to load."},
     )
     api_key: Optional[str] = field(
-        default=None,
+        default="",
         metadata={"help": "Api key for calling api service, if "}
     )
     base_url: Optional[str] = field(
@@ -323,25 +323,26 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         init=False,
         metadata={"help": "Whether use block diag attention or not, derived from `neat_packing`. Do not specify it."},
     )
-
-    def __post_init__(self):
-        if self.model_name_or_path is None:
-            raise ValueError("Please provide `model_name_or_path`.")
-
-        if self.split_special_tokens and self.use_fast_tokenizer:
-            raise ValueError("`split_special_tokens` is only supported for slow tokenizers.")
-
-        if self.adapter_name_or_path is not None:  # support merging multiple lora weights
-            self.adapter_name_or_path = [path.strip() for path in self.adapter_name_or_path.split(",")]
-
-        if self.new_special_tokens is not None:  # support multiple special tokens
-            self.new_special_tokens = [token.strip() for token in self.new_special_tokens.split(",")]
-
-        if self.export_quantization_bit is not None and self.export_quantization_dataset is None:
-            raise ValueError("Quantization dataset is necessary for exporting.")
-
-        if isinstance(self.vllm_config, str) and self.vllm_config.startswith("{"):
-            self.vllm_config = _convert_str_dict(json.loads(self.vllm_config))
+    role: Optional[str] = field(
+        default=None,
+        metadata={"help": "Role of the model in the pipeline."},
+    )
+    device: Optional[str] = field(
+        default=None,
+        metadata={"help": "Device used for inference, Example: '0,1,2,3' "},
+    )
+    deploy: bool = field(
+        default=False,
+        metadata={"help": "Whether or not to deploy the model."},
+    )
+    api_host: Optional[str] = field(
+        default=None,
+        metadata={"help": "Host for calling api service"}
+    )
+    api_port: Optional[int] = field(
+        default=None,
+        metadata={"help": "Port for calling api service"}
+    )
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":

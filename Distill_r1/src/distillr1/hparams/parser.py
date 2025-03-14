@@ -28,14 +28,15 @@ from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
 from .distill_args import DistillArguments
 from .fintuning_args import FinetuningArguments
+from .client_args import ClientArguments
 
 logger = logging.get_logger(__name__)
 
 check_dependencies()
 
 _INFER_ARGS = [ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
-_INFER_CLS = Tuple[ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
-
+_INFER_CLS = Tuple[List[ModelArguments], DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
+_ORIGIN_INFER_CLS = Tuple[ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
 
 def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
     r"""
@@ -56,8 +57,19 @@ def _parse_args(
     parser: "HfArgumentParser", args: Optional[Union[Dict[str, Any], List[str]]] = None, allow_extra_keys: bool = False
 ) -> Tuple[Any]:
     args = read_args(args)
+    chatmodel_args = args.pop("chat", None)
     if isinstance(args, dict):
-        return parser.parse_dict(args, allow_extra_keys=allow_extra_keys)
+        parsed_args = parser.parse_dict(args, allow_extra_keys=allow_extra_keys)
+        if chatmodel_args is not None:
+            chatmodel_args_list = []
+            for chatmodel_arg in chatmodel_args:
+                model_parser = HfArgumentParser([ModelArguments,GeneratingArguments,DataArguments])
+                client_arg = model_parser.parse_dict(chatmodel_arg)
+                model_args, generating_args,data_args = client_arg
+                chatmodel_args_list.append((model_args, generating_args,data_args))
+            return (chatmodel_args_list,) + parsed_args[1:] # leave out the default model_args
+        else:
+            return ([parsed_args[0]],) + parsed_args[1:]
 
     (*parsed_args, unknown_args) = parser.parse_args_into_dataclasses(args=args, return_remaining_strings=True)
 
@@ -65,7 +77,6 @@ def _parse_args(
         print(parser.format_help())
         print(f"Got unknown args, potentially deprecated arguments: {unknown_args}")
         raise ValueError(f"Some specified arguments are not used by the HfArgumentParser: {unknown_args}")
-
     return tuple(parsed_args)
 
 
@@ -82,18 +93,18 @@ def _parse_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -
     return _parse_args(parser, args, allow_extra_keys=allow_extra_keys)
 
 def get_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _INFER_CLS:
-    model_args, data_args, generating_args,distill_args,finetuning_args= _parse_infer_args(args)
-    if model_args.infer_backend == "vllm":
-        if model_args.adapter_name_or_path is not None and len(model_args.adapter_name_or_path) != 1:
-            raise ValueError("vLLM only accepts a single adapter. Merge them first.")
-        if model_args.model_name_or_path is None:
-            raise ValueError("Please provide `model_name_or_path` for api call or deploy")
+    client_args_list, data_args, generating_args,distill_args,finetuning_args= _parse_infer_args(args)
+    return client_args_list, data_args,finetuning_args,generating_args,distill_args
 
-    _verify_model_args(model_args, data_args)
-    _check_extra_dependencies(model_args)
-
-    return model_args, data_args,finetuning_args,generating_args,distill_args
-
+def get_origin_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _ORIGIN_INFER_CLS:
+    model_args, data_args, generating_args,distill_args,finetuning_args = _parse_infer_args(args)
+    model_args = model_args[0]
+    
+    if isinstance(model_args,tuple):
+        model_args = model_args[0]
+    
+    return model_args, data_args, finetuning_args,generating_args,distill_args,
+    
 
 def _verify_model_args(
     model_args: "ModelArguments",

@@ -60,10 +60,8 @@ async def sweeper() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: "FastAPI", chat_model):  # collects GPU memory
-    # if chat_model.engine.name == EngineName.HF:
+async def lifespan(app: "FastAPI", chat_model):
     asyncio.create_task(sweeper())
-
     yield
     torch_gc()
 
@@ -104,39 +102,36 @@ def create_app(args:Optional[Dict[str, Any]] = None) -> "FastAPI":
         dependencies=[Depends(verify_api_key)],
     )
     async def create_chat_completion(request: ChatCompletionRequest):
-        print("get request")
         model_id = request.model
-        print(f"requesting model_id {model_id}")
-        print(f"model_ids {model_router.get_model_ids()}")
-        
         if model_id not in model_router.get_model_ids():
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, 
                 detail=f"Model '{model_id}' not found."
             )    
         chat_model = model_router.get_model(model_id)
-        print(f"current chat model is: {chat_model}")
-        
         if request.stream:
             generate = create_stream_chat_completion_response(request, chat_model)
             return EventSourceResponse(generate, media_type="text/event-stream", sep="\n")
         else:
             return await create_chat_completion_response(request, chat_model)
-    return app
+    return app,model_router
 
 
-def run_api() -> None:
-    # 仅传入-> 需要的args deploy的args.
-    
-    # chat_model = ChatModel()
-    app = create_app()
+
+import threading
+def run_api(args: Optional[Dict[str, Any]] = None, HOST=None, PORT=None):
+    app, model_router = create_app(args)
     if app is None:
         raise ValueError("Failed to create FastAPI app.")
-    
-    api_host = os.getenv("API_HOST", "0.0.0.0")
-    api_port = int(os.getenv("API_PORT", "8000"))
-    print(f"Visit http://localhost:{api_port}/docs for API document.")
+    api_host = HOST or os.getenv("API_HOST", "0.0.0.0")
+    api_port = PORT or int(os.getenv("API_PORT", "8000"))
+    print(f"Visit http://{api_host}:{api_port}/docs for API document.")
+    thread = threading.Thread(target=start_api, args=(app, api_host, api_port), daemon=True)
+    thread.start()
+    return model_router
+
+def start_api(app, api_host, api_port):
     uvicorn.run(app, host=api_host, port=api_port)
-    
+
 if __name__ == "__main__":
     run_api()
