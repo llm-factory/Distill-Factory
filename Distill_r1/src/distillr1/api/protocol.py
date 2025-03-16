@@ -85,6 +85,15 @@ class ChatMessage(BaseModel):
     content: Optional[Union[str, List[MultimodalInputItem]]] = None
     tool_calls: Optional[List[FunctionCall]] = None
 
+class UserMessage(ChatMessage):
+    def __init__(self,content:str,tool_calls:Optional[str]=None):
+        super().__init__(role="user",content=content,tool_calls=tool_calls)
+
+class AssistantMessage(ChatMessage):
+    def __init__(self,content:str,tool_calls:Optional[str]=None):
+        super().__init__(role="assistant",content=content,tool_calls=tool_calls)
+
+
 
 class ChatCompletionMessage(BaseModel):
     role: Optional[Role] = None

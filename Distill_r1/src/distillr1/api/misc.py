@@ -1,6 +1,8 @@
 from typing import Any,List,Dict,Union
 from dataclasses import dataclass
-from .protocol import ModelInfo
+from .protocol import ModelInfo,ChatMessage
+from typing import Dict
+
 def try_api_call(args:Any):
     pass
 
@@ -41,5 +43,28 @@ def parse_model_info(model_args) -> List[ModelInfo]:
         ))
     
     return model_infos
+
+
+def build_messages(*messages: Union[ChatMessage]) -> List[Dict[str,str]]:
+    newMessages = []
+    for message in messages:
+        msg = {"role": message.role, "content": message.content}
+        newMessages.append(msg)
+    return newMessages
+
+def convert_api_compatable_generating_args(generating_args: Dict) -> Dict:
+    api_args = {}
+    if "do_sample" in generating_args:
+        api_args["temperature"] = generating_args["temperature"] if generating_args["do_sample"] else 0.0
+    if "top_p" in generating_args:
+        api_args["top_p"] = generating_args["top_p"]
+    elif "max_length" in generating_args:
+        api_args["max_tokens"] = generating_args["max_length"]
+    elif "tool" in generating_args:
+        api_args["tool"] = generating_args["tool"]
+    elif "n" in generating_args:
+        api_args["n"] = generating_args["n"]
+            
+    return api_args
 
 

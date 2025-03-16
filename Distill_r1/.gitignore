@@ -2,3 +2,4 @@ __pycache__
 .yaml
 .json
 *egg-info
+.git

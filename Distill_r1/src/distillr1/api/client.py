@@ -4,6 +4,8 @@ import os
 from openai import AsyncOpenAI
 from .router import ModelRouter,ModelInfo
 from ..hparams import ModelArguments, DataArguments, get_infer_args, read_args
+from ..utils.misc import convert_api_compatable_generating_args
+from typing import List, Dict
 from .protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -17,13 +19,18 @@ from .protocol import (
 class Client(AsyncOpenAI):
     def __init__(self, base_url: str, api_key: str, **kwargs):
         super().__init__(base_url=base_url, api_key=api_key)
-        self.default_model = kwargs.pop("model_id", None)
+        self.model_info = kwargs.pop("model_info", None)
+        self.model_id = self.model_info.model_id if self.model_info else None
+        self.generating_args = self.model_info.get_generating_args() if self.model_info else None
     
     def _process_messages(self, messages: List[ChatMessage]) -> List[Dict[str, str]]:
         processed_messages = []
         for message in messages:
             processed_messages.append({"role": "user", "content": message.content})
         return processed_messages
+
+    def get_generating_args(self) -> Dict:
+        return self.generating_args
 
     async def create_chat_completion_response(
             self,
@@ -64,10 +71,10 @@ class Client(AsyncOpenAI):
             )
         )
     
-    async def async_chat(self,messages:List[List[Dict[str,str]]],model:str=None)->List[str]:
+    async def async_chat(self,messages:List[List[Dict[str,str]]],model:str=None,**kwargs)->List[str]:
         """
         """
-        response = await asyncio.gather(*(self.create_chat_from_message(message,model) for message in messages))
+        response = await asyncio.gather(*(self.create_chat_from_message(message,model,**kwargs) for message in messages))
         return response
     
     async def create_chat_from_message(
@@ -79,14 +86,20 @@ class Client(AsyncOpenAI):
         """
         Create a chat completion from a single message.
         """
-        model_to_request = model or self.default_model
+        # 如果 kwargs 提供了 generating_args ,则覆盖.
+        # 否则使用 model_info.get_genearting_args()
+        generating_args = convert_api_compatable_generating_args(self.model_info.get_generating_args())
+        for key, value in kwargs.items():
+            if key in generating_args:
+                generating_args[key] = value        
+        model_to_request = model or self.model_info.model_id
         request = ChatCompletionRequest(
             model=model_to_request,
             messages=[
                 ChatMessage(role="user", content=message)
             ],
         )
-        response = await self.create_chat_completion_response(request, **kwargs)
+        response = await self.create_chat_completion_response(request, **generating_args)
         return response.choices[0]
 
     async def judge_answer_correctness(
@@ -115,8 +128,6 @@ class Client(AsyncOpenAI):
             return False
 # TODO
 
-from typing import List, Dict
-
 def parse_client(model_infos: List[ModelInfo]) -> Dict[str, Client]:
     """
     Return a dictionary of Client instances, indexed by model_id and role.
@@ -134,19 +145,19 @@ def parse_client(model_infos: List[ModelInfo]) -> Dict[str, Client]:
 
         if model_info.deploy:
             if model_info.base_url is None:  # 处理 base_url 为空的情况
-                api_host = model_info.api_host or "localhost"
-                api_port = model_info.api_port or "8000"
+                api_host = model_info.api_host or os.getenv("API_HOST","0.0.0.0")
+                api_port = model_info.api_port or int(os.getenv("API_PORT",8000))
                 base_url = f"http://{api_host}:{api_port}/v1"
             else:
                 base_url = model_info.base_url
-            client = Client(base_url, model_info.api_key, model_id=model_info.model_id)
+            client = Client(base_url, model_info.api_key, model_info)
             clients[model_info.model_id] = client
             
             if model_info.role and model_info.role not in clients:  # 避免 role 覆盖已有 key
                 clients[model_info.role] = client
         else:
             if model_info.base_url:
-                client = Client(model_info.base_url, model_info.api_key, model_id=model_info.model_id)
+                client = Client(model_info.base_url, model_info.api_key, model_info)
                 clients[model_info.model_id] = client
                 if model_info.role and model_info.role not in clients:
                     clients[model_info.role] = client

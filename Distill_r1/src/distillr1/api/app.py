@@ -14,14 +14,12 @@
 
 import asyncio
 import os
+import threading
 from contextlib import asynccontextmanager
 from functools import partial
 from typing import Optional,Any,Dict
 from .router import ModelRouter 
 from typing_extensions import Annotated
-# from src.distillr1.chat import ChatModel
-from ..chat import ChatModel
-from ..extras.constants import EngineName
 from ..extras.misc import torch_gc
 from ..extras.packages import is_fastapi_available, is_starlette_available, is_uvicorn_available
 from .chat import (
@@ -117,8 +115,6 @@ def create_app(args:Optional[Dict[str, Any]] = None) -> "FastAPI":
     return app,model_router
 
 
-
-import threading
 def run_api(args: Optional[Dict[str, Any]] = None, HOST=None, PORT=None):
     app, model_router = create_app(args)
     if app is None:

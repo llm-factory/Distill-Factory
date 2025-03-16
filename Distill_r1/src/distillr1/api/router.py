@@ -29,7 +29,19 @@ logger = logging.get_logger(__name__)
 class ModelInfo(ModelArguments,GeneratingArguments,DataArguments):
     """
     """
-
+    def get_genearating_args(self):
+        return {
+            "temperature": self.temperature,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "num_beams": self.num_beams,
+            "max_length": self.max_length,
+            "max_new_tokens": self.max_new_tokens,
+            "repetition_penalty": self.repetition_penalty,
+            "length_penalty": self.length_penalty,
+            "default_system": self.default_system,
+            "skip_special_tokens": self.skip_special_tokens,
+        }
 
 class ModelRouter:
     """

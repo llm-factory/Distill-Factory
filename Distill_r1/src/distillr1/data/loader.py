@@ -208,7 +208,6 @@ def get_qa_pairs(
     """
     dataset_module = get_dataset(model_args, data_args)
     if "train_dataset" in dataset_module:
-        train_dataset_reasoner = []
         train_dataset = dataset_module["train_dataset"]
         logger.info(f"Source Dataset size: {len(train_dataset)}")
         logger.info(f"Source Dataset columns: {train_dataset.column_names}")
