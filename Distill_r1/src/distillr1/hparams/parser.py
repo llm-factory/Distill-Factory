@@ -28,7 +28,7 @@ from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
 from .distill_args import DistillArguments
 from .fintuning_args import FinetuningArguments
-from .client_args import ClientArguments
+from .curation_args import CurationArguments
 
 logger = logging.get_logger(__name__)
 
@@ -37,6 +37,9 @@ check_dependencies()
 _INFER_ARGS = [ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
 _INFER_CLS = Tuple[List[ModelArguments], DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
 _ORIGIN_INFER_CLS = Tuple[ModelArguments, DataArguments, GeneratingArguments,DistillArguments,FinetuningArguments]
+
+_CURATION_ARGS = [CurationArguments]
+_CURATION_CLS = Tuple[CurationArguments]
 
 def read_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> Union[Dict[str, Any], List[str]]:
     r"""
@@ -104,6 +107,15 @@ def get_origin_infer_args(args: Optional[Union[Dict[str, Any], List[str]]] = Non
         model_args = model_args[0]
     
     return model_args, data_args, finetuning_args,generating_args,distill_args,
+
+
+def _parse_curation_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _CURATION_CLS:
+    parser = HfArgumentParser(_CURATION_ARGS)
+    return _parse_args(parser, args)
+
+def get_curation_args(args: Optional[Union[Dict[str, Any], List[str]]] = None) -> _CURATION_CLS:
+    curation_args = _parse_curation_args(args)
+    return curation_args
     
 
 def _verify_model_args(

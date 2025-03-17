@@ -214,4 +214,9 @@ def get_qa_pairs(
         if len(train_dataset) > 0:
             logger.info("First data example:")
             logger.info(train_dataset[0])
-        return train_dataset["_prompt"], train_dataset["_response"]
+        print(train_dataset)
+        print(train_dataset["_prompt"])
+        print(train_dataset["_response"])
+        questions = [content[0]["content"] for content in train_dataset["_prompt"]]
+        answers = [content[0]["content"] for content in train_dataset["_response"]]
+        return questions,answers

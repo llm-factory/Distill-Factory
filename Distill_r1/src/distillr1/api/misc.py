@@ -1,6 +1,6 @@
 from typing import Any,List,Dict,Union
 from dataclasses import dataclass
-from .protocol import ModelInfo,ChatMessage
+from .protocol import ChatMessage,ModelInfo
 from typing import Dict
 
 def try_api_call(args:Any):

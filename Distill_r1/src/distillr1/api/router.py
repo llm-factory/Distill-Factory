@@ -16,32 +16,17 @@ import os
 import json
 from typing import Dict, List, Optional, Any
 import copy
-from ..hparams import get_infer_args,ModelArguments,GeneratingArguments,ClientArguments,DataArguments
+from ..hparams import get_infer_args
 from ..chat import ChatModel
 from ..extras import logging
+from .protocol import ModelInfo
 from ..extras.misc import get_device_count
 from dataclasses import dataclass
 from enum import Enum
 logger = logging.get_logger(__name__)
 
 
-@dataclass
-class ModelInfo(ModelArguments,GeneratingArguments,DataArguments):
-    """
-    """
-    def get_genearating_args(self):
-        return {
-            "temperature": self.temperature,
-            "top_p": self.top_p,
-            "top_k": self.top_k,
-            "num_beams": self.num_beams,
-            "max_length": self.max_length,
-            "max_new_tokens": self.max_new_tokens,
-            "repetition_penalty": self.repetition_penalty,
-            "length_penalty": self.length_penalty,
-            "default_system": self.default_system,
-            "skip_special_tokens": self.skip_special_tokens,
-        }
+
 
 class ModelRouter:
     """
@@ -55,7 +40,11 @@ class ModelRouter:
         self.data_args = data_args
         self.model_infos = []
         self.chatmodels = {}
+        self.deploy = False
         self.init_router()
+
+    def get_deploy(self) -> bool:
+        return self.deploy
 
     def get_model_infos(self) -> List[ModelInfo]:
         """

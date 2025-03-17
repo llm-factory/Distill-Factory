@@ -8,7 +8,6 @@ from ..extras import logging
 from ..api.client import Client,parse_client
 from ..api.router import ModelRouter
 from ..api.app import run_api
-from .judge import SYSTEM_JUDGE_PROMPT
 import asyncio
 import debugpy
 from .distiller import Distiller
@@ -24,9 +23,6 @@ async def run_exp(args: Optional[Dict[str, Any]] = None,max_try=3) -> None:
     model_infos = router.get_model_infos()    
     clients = parse_client(model_infos)
     model_args, data_args, finetuning_args,generating_args,distill_args = get_origin_infer_args(args)
-    chat_client = clients["chat"]
-    if distill_args.enable_reward_model:
-        reward_client = clients["reward"]
     questions,answers = get_qa_pairs(model_args, data_args)
     distiller = Distiller(distill_args,clients,questions,answers)
     await distiller.distill()

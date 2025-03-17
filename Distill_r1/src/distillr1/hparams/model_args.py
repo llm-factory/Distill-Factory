@@ -165,7 +165,7 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         metadata={
             "help": "Model name for api call, default to 'model_name_or_path'. Use commas to separate multiple models."
         },
-    ),
+    )
     adapter_name_or_path: Optional[str] = field(
         default=None,
         metadata={
@@ -343,6 +343,11 @@ class ModelArguments(QuantizationArguments, ProcessorArguments, ExportArguments,
         default=None,
         metadata={"help": "Port for calling api service"}
     )
+    
+    def __post_init__(self):
+        if self.model_id is None:
+            self.model_id = self.model_name_or_path
+    
 
     @classmethod
     def copyfrom(cls, source: "Self", **kwargs) -> "Self":

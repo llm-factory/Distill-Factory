@@ -1,14 +1,19 @@
 chat:
-  - model_name_or_path: deepseek-reasoner
-    base_url: https://api.deepseek.com
-    api_key: "123456"
-    temperature: 0
+  - model_name_or_path: deepseek/deepseek-r1
+    base_url: 
+    api_key: 
+    temperature: 0.6
     role: chat
-  - model_name_or_path: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
-    model_id: ds
-    device: "1,2,3,4"
-    temperature: 1
-    role: reward
+  - model_name_or_path: deepseek/deepseek-chat
+    base_url: 
+    api_key: 
+    temperature: 0
+    role: judge
 
+
+roll_out_size: 2
 dataset: gaokao_math
-max_samples: 20
+max_samples: 1
+meta_prompt: Please reason step by step, and put your final answer within \boxed{}.
+llm_as_judge: True
+

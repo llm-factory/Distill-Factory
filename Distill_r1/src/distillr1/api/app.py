@@ -122,8 +122,9 @@ def run_api(args: Optional[Dict[str, Any]] = None, HOST=None, PORT=None):
     api_host = HOST or os.getenv("API_HOST", "0.0.0.0")
     api_port = PORT or int(os.getenv("API_PORT", "8000"))
     print(f"Visit http://{api_host}:{api_port}/docs for API document.")
-    thread = threading.Thread(target=start_api, args=(app, api_host, api_port), daemon=True)
-    thread.start()
+    if model_router.get_deploy():    
+        thread = threading.Thread(target=start_api, args=(app, api_host, api_port), daemon=True)
+        thread.start()
     return model_router
 
 def start_api(app, api_host, api_port):

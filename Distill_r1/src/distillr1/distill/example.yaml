@@ -1,0 +1,24 @@
+chat:
+  - model_name_or_path: deepseek-reasoner
+    base_url: https://api.deepseek.com
+    api_key: "123456"
+    temperature: 0.7
+    role: chat
+  - model_name_or_path: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+    model_id: ds
+    device: "1,2,3,4"
+    temperature: 1
+    role: reward
+
+dataset: gaokao_math
+max_samples: 20
+
+
+curation:
+ - length_filter:
+    min_length: 10
+    max_length: 100
+ - thinking_token_filter:
+    thinking_token: "思考"
+    min_num: 1
+    max_num: 10

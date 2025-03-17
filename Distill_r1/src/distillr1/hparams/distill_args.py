@@ -1,26 +1,6 @@
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, Optional
-
-
-@dataclass
-class ReasoningCurationArguments:
-    r"""
-    """
-    # TODO
-
-@dataclass
-class ResponseCurationArguments:
-    r"""
-    """
-    # TODO
-
-@dataclass
-class CurationArguments(ReasoningCurationArguments,ResponseCurationArguments):
-    """
-    Arguments for the synthetic data curation.
-    TODO
-    """
-    pass
+from .curation_args import CurationArguments
 
 @dataclass
 class DistillArguments(CurationArguments):
@@ -40,7 +20,7 @@ class DistillArguments(CurationArguments):
         metadata={"help": "The output path where the synthetic dataset will be written."},
     )
     meta_prompt: Optional[str] = field(
-        default="",
+        default="Please reason step by step, and put your final answer within \\boxed{}.",
         metadata={"help": "The meta prompt for the synthetic dataset."},
     )
     enable_reward_model: Optional[bool] = field(

@@ -16,7 +16,6 @@ from .data_args import DataArguments
 from .generating_args import GeneratingArguments
 from .model_args import ModelArguments
 from .fintuning_args import FinetuningArguments
-from .client_args import ClientArguments
 from .parser import read_args, get_infer_args,get_origin_infer_args
 
 
@@ -25,7 +24,6 @@ __all__ = [
     "FinetuningArguments",
     "GeneratingArguments",
     "ModelArguments",
-    "ClientArguments",
     "get_infer_args",
     "read_args",
     "get_origin_infer_args"
