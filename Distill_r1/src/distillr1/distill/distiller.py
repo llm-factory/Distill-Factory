@@ -17,35 +17,21 @@ class Distiller():
             self.judge_client = clients["judge"]
         
     async def distill(self):
-        # batch_size = self.distill_args.
-        batch_size = 4
+        batch_size = 4 # TODO
         all_questions,all_curated_output = [],[]        
-        
         
         for i in range(0,len(self.questions),batch_size):
             batch_questions = self.questions[i:i+batch_size]
             batch_answers = self.answers[i:i+batch_size]
             batch_tasks = [self.distill_single(question,answer) for question,answer in zip(batch_questions,batch_answers)]
-            print("Running batch tasks")
             results = await asyncio.gather(*batch_tasks)
             batch_questions = [item[0] for item in results]
             batch_curated_output = [item[1] for item in results]            
-            print("RRRRRRR")
-            print(results)
             all_questions.extend(batch_questions)
             all_curated_output.extend(batch_curated_output)
-            print("Batch Questions")
-            print(batch_questions)
-            print("Batch Curated Output")
-            print(batch_curated_output)
             save_to_json(all_questions,all_curated_output,self.distill_args.output_path)
         
     async def distill_single(self,question:str,answer:str)->Tuple[str,str]:
-        print("meta_prompt")
-        print(self.distill_args.meta_prompt)
-        print("question")
-        print(question)
-        
         prompts = [
             [
                 UserMessage(self.distill_args.meta_prompt + question)
@@ -55,10 +41,7 @@ class Distiller():
             raise ValueError("Performing roll out with temperature=0, Increase temperature or set roll_out_size to 1")
         
         candidates = await self.chat_client.async_chat(prompts)
-        print("CANDIDATES")
-        print(candidates)
+
         curated_output = await self.curator.curate(candidates,answer)
-        print("CURATED OUTPUT")
-        print(curated_output)
         
         return question,curated_output
