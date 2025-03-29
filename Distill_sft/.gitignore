@@ -4,3 +4,4 @@ config.yaml
 .gradio
 *.json
 *.ipynb
+.idea/
