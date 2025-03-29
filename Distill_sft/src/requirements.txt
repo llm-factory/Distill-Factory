@@ -6,3 +6,4 @@ pydantic
 PyYAML
 tqdm
 typing_extensions
+httpx[socks]
