@@ -7,7 +7,7 @@ Distill-sft 是一个微调数据集生成工具，可以从文本内容中自�
 https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 ## 功能特点
 
-- 支持多种数据源输入：单文件、多文件、JSON 文件。
+- 支持多种数据源输入：单文件、多文件、JSON 文件、PDF 文件。
 - 提供 WebUI 和命令行两种使用方式。
 - 支持异步 API 请求，提高数据生成效率。
 - 支持开源大模型与闭源大模型接入。开源模型推荐使用 [vllm serve](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html?ref=blog.mozilla.ai#cli-reference) 进行部署 。闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
@@ -15,6 +15,7 @@ https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 - 多种数据生成策略：
   - 基础问答生成 (genQA)：从文本中提取标题,根据标题生成相关问答对。
   - 回译重写生成 (backtranslation_rewrite)：通过回译和重写生成相关问答对。
+  - 多模态模型生成 (VisGen)：通过多模态模型识别 PDF 文档生成问答对。
   - 支持修改、扩展、自定义数据生成策略。
 
 ## 使用准备
