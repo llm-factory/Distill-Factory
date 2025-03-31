@@ -23,12 +23,12 @@ class FunctionCall(BaseModel):
 
 class BaseMessage(BaseModel):
     role: str
-    content: Union[str, List[Dict[str, str]]]
+    content: Union[str, List[Dict[str, Any]]]
 
     def __str__(self) -> str:
         if isinstance(self.content, str):
             content = self.content
-        elif isinstance(self.content, list):
+        else:
             content = json.dumps(self.content, ensure_ascii=False, indent=2)
         return f"role:{self.role} \ncontent:{content}"
 
@@ -39,7 +39,7 @@ class SystemMessage(BaseMessage):
 
 
 class UserMessage(BaseMessage):
-    def __init__(self, content: Union[str, List[Dict[str, str]]]):
+    def __init__(self, content: Union[str, List[Dict[str, Any]]]):
         super().__init__(role="user", content=content)
 
 
