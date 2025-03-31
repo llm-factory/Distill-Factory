@@ -78,7 +78,14 @@ class Config:
         if not file_config_dict:
             raise ValueError("file config is required")
 
-        file_type = file_config_dict.get("file_type", "txt")
+        file_type = file_config_dict.get("file_type", None)
+
+        if not file_type:
+            if file_config_dict.get("generation", {}).get("method") == "VisGen":
+                file_type = "pdf"
+            else:
+                file_type = "txt"
+
         if isinstance(file_type, str):
             file_type = [file_type]
 
