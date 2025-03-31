@@ -1,0 +1,12 @@
+api:
+  model: qwen2.5-vl-7b-instruct
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1/
+  api_key: xxx
+file:
+  is_structure_data: False
+  file_path: "PDF path"
+generation:
+  method: VisGen
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "pdf.json"
