@@ -139,7 +139,6 @@ class VisGenQA(Strategy):
 
         for i in range(0, len(images), config.concurrent_api_requests_num):
             batch_images = images[i:i + config.concurrent_api_requests_num]
-            # TODO
             tasks = [self.process_single_data(image, config) for image in batch_images]
             results = await asyncio.gather(*tasks)
 
