@@ -10,7 +10,8 @@ async def run_exp():
     parser = argparse.ArgumentParser(description="载入配置文件")
     parser.add_argument("config", type=str, help="filename of config")
     args = parser.parse_args()
-    config = Config(file_path=args.config)         
+    config = Config(file_path=args.config)
+
     api  = API(config)
     logger = Logger()
     Method = StrategyGetter.get_strategy(config.method)(api,config)
@@ -19,11 +20,11 @@ async def run_exp():
 
 if __name__ == "__main__":
     asyncio.run(run_exp())
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
