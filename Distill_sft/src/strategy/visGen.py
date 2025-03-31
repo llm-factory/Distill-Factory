@@ -149,8 +149,8 @@ class VisGenQA(Strategy):
         return all_questions, all_answers
 
     async def run(self, config: Config) -> Tuple[List[str], List[str]]:
-        if any([i in ['pdf', 'PDF', 'doc'] for i in config.file_type]):
-            raise ValueError("VisGen only supports pdf files")
+        if any([i not in ['pdf', 'PDF'] for i in config.file_type]):
+            raise ValueError('VisGen only supports pdf files, please set file_type to ["pdf"]')
 
         init_QA_dataset(config.save_dir, config.save_file_name)
 

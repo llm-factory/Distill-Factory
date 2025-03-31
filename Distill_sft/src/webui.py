@@ -161,7 +161,7 @@ class WebUI:
                                     info="文件类型",
                                     multiselect=True,
                                     allow_custom_value=True,
-                                    choices=["txt", "json", "md", "rst", "pdf", "word", ],
+                                    choices=["txt", "json", "md", "rst", "pdf"],
                                     scale=2
                                 )
                         with gr.Row():
