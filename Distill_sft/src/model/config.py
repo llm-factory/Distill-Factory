@@ -81,7 +81,7 @@ class Config:
         file_type = file_config_dict.get("file_type", None)
 
         if not file_type:
-            if file_config_dict.get("generation", {}).get("method") == "VisGen":
+            if self.conf_dict.get("generation", {}).get("method") == "VisGen":
                 file_type = "pdf"
             else:
                 file_type = "txt"
