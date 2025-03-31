@@ -4,7 +4,7 @@ api:
   api_key: xxx
 file:
   is_structure_data: False
-  file_path: "PDF path"
+  file_path: "PDF_path"
 generation:
   method: VisGen
   concurrent_api_requests_num: 1
