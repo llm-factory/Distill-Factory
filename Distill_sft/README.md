@@ -161,7 +161,7 @@ api: # api相关配置
   api_key: ""
 file: # 生成数据集所用文件相关配置
   file_folder: "" # 输入文件夹路径
-  file_type: "" # 文件夹中需要使用的文件类型
+  file_type: [""] # 文件夹中需要使用的文件类型
   main_theme: "" # 文本主题
 generation: # 数据生成相关配置
   method: "" # 生成方式
@@ -185,7 +185,7 @@ api:
   api_key: ""
 file:
   file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
-  file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
+  file_type: ["rst"] # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
   main_theme: "LLaMA-Factory使用文档"
 generation:
   method: "genQA"

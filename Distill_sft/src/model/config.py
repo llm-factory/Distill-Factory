@@ -77,6 +77,11 @@ class Config:
         file_config_dict = self.conf_dict.get("file", {})        
         if not file_config_dict:
             raise ValueError("file config is required")
+
+        file_type = file_config_dict.get("file_type", "txt")
+        if isinstance(file_type, str):
+            file_type = [file_type]
+
         self.file_config = FileConfig(
             file_path=file_config_dict.get("file_path","").split(),
             file_folder=file_config_dict.get("file_folder"),
@@ -84,7 +89,7 @@ class Config:
             is_structure_data=file_config_dict.get("is_structure_data", False),
             text_template=file_config_dict.get("text_template"),
             chunk_size=file_config_dict.get("chunk_size", 2048),
-            file_type=file_config_dict.get("file_type", "txt")
+            file_type=file_type
         )
         self.main_theme: str = self.file_config.main_theme
         self.file_path: List[str] = self.file_config.file_path
@@ -92,7 +97,7 @@ class Config:
         self.is_structure_data: bool = self.file_config.is_structure_data
         self.text_template: str = self.file_config.text_template        
         self.chunk_size: int = self.file_config.chunk_size
-        self.file_type: str = self.file_config.file_type
+        self.file_type: List[str] = self.file_config.file_type
         if not self.file_path and not self.file_folder:
             raise ValueError("file_path or file_folder is required")
         if self.file_folder and not self.file_type:
