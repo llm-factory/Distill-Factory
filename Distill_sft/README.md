@@ -253,7 +253,7 @@ generation:
 
 #### PDF文件处理
 
-工具支持使用视觉大模型（VLM）来解析从复杂 PDF 文件中提取问答对合成 SFT 数据集，可以使用 `python main.py ../example/config/single_pdf_demo.yaml`  来执行该功能：
+工具支持使用视觉大模型（VLM）来从复杂 PDF 文件中提取问答对合成 SFT 数据集，可以使用 `python main.py ../example/config/single_pdf_demo.yaml`  来执行该功能：
 
 ```yaml
 ### ../example/config/single_pdf_demo.yaml
@@ -272,6 +272,8 @@ generation:
 ```
 
 同样，如果需要支持多文件可以参照 `example/config/multi_pdf_demo.yaml`。
+
+---
 
 ### 参数说明
 
