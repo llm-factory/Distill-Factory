@@ -4,7 +4,7 @@ api:
   api_key: xxx
 file:
   is_structure_data: False
-  file_path: "PDF_path"
+  file_folder: "../example/dataset/a100-datasheet"
 generation:
   method: VisGen
   concurrent_api_requests_num: 1
