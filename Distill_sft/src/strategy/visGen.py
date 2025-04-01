@@ -149,6 +149,9 @@ class VisGenQA(Strategy):
         return all_questions, all_answers
 
     async def run(self, config: Config) -> Tuple[List[str], List[str]]:
+        if config.is_structure_data:
+            raise ValueError('VisGen does not support structure data, please set is_structure_data to False')
+
         if any([i not in ['pdf', 'PDF'] for i in config.file_type]):
             raise ValueError('VisGen only supports pdf files, please set file_type to ["pdf"]')
 
