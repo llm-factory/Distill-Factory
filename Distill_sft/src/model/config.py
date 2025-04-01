@@ -39,6 +39,7 @@ class GenerationConfig:
     max_nums: int = 1e6
     quantity_level: int = 3
     diversity_mode: str = "basic"
+    verify_qa: bool = False
 
 @dataclass
 class RagConfig:
@@ -126,6 +127,7 @@ class Config:
             max_nums=generation_config_dict.get("max_nums", 1e6),
             quantity_level = generation_config_dict.get("quantity_level", 3),
             diversity_mode = generation_config_dict.get("diversity_mode", "basic"),
+            verify_qa= generation_config_dict.get("verify_qa", False)
         )
         self.method: str = self.generation_config.method
         self.num_questions_per_title: int = self.generation_config.num_questions_per_title
@@ -139,6 +141,7 @@ class Config:
         self.max_nums: int = self.generation_config.max_nums
         self.quantity_level: int = self.generation_config.quantity_level
         self.diversity_mode: str = self.generation_config.diversity_mode
+        self.verify_qa: bool = self.generation_config.verify_qa
         
         if not self.method:
             raise ValueError("generation method is required")

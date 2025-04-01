@@ -46,6 +46,7 @@ class BasicQAGenerator(Generator):
         self.question_prompt = config.question_prompt if config.question_prompt else ""
         self.answer_prompt = config.answer_prompt if config.answer_prompt else ""
         self.text_retriever = BaseTextRetriever(self.api,self.config)
+        self.qa_verifier = BaseQAVerifier(self.api)
 
     async def generate(self, text: str, config: GenerationConfig) -> Tuple[List[str], List[str]]:
         titles = await self._generate_titles(text,config)
@@ -116,6 +117,8 @@ class BasicQAGenerator(Generator):
         logger.info("prompts")
         logger.info(prompts)
         questions,answers = extract_json(responses,"question","answer")
+        if self.config.verify_qa:
+            questions, answers = await self.qa_verifier.verify(text, questions, answers, config)
         logger.info(f"{'-'*20}Questions{'-'*20}")
         logger.info(questions)
         logger.info(f"{'-'*20}Answers{'-'*20}")

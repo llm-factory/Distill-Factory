@@ -51,6 +51,7 @@ class VisGenQAGenerator(Generator):
         self.answer_prompt = config.answer_prompt if config.answer_prompt else ""
         self.text_retriever = None
         self.image_renderer = None
+        self.qa_verifier = VisGenQAVerifier(self.api)
 
     async def generate(self, image: bytes, config: GenerationConfig) -> Tuple[List[str], List[str]]:
         all_questions = []

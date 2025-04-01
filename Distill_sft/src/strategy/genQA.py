@@ -23,6 +23,7 @@ class TwoStageQAGenerator(Generator):
         self.split = self.config.quantity_level >= 4
         self.num_questions_per_title = self.config.quantity_level
         self.text_retriever = BaseTextRetriever(self.api,self.config)
+        self.qa_verifier = BaseQAVerifier(self.api)
 
     async def generate(self, text: str, config: GenerationConfig) -> Tuple[List[str], List[str]]:
         personas = []
@@ -179,6 +180,8 @@ class genQA(Strategy):
         
         questions, answers = await self.qa_generator.generate(text, config)
         questions = questions_filter(questions)
+        if self.config.verify_qa:
+            questions, answers = await self.qa_verifier.verify(text, questions, answers, config)
         
         logger.debug(f"{'='*30}Questions{'='*30}")
         logger.debug(questions)

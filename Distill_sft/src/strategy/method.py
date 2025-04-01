@@ -86,6 +86,17 @@ class BaseQAVerifier(Verifier):
             delete_num = len([idx for idx in bin if idx == 0])
             verified_Q = [q for idx,q in enumerate(batch_questions) if bin[idx] == 1]
             verified_A = [a for idx,a in enumerate(batch_answers) if bin[idx] == 1]
+            unqualified = [0 if "无效" in r.split()[-1] + r.split()[0] else 1 for r in replies]
+            verified_Q = [q for idx,q in enumerate(batch_questions) if unqualified[idx] == 1]
+            verified_A = [a for idx,a in enumerate(batch_answers) if unqualified[idx] == 1]
+            unqualified_Q = [q for idx,q in enumerate(batch_questions) if unqualified[idx] == 0]
+            unqualified_A = [a for idx,a in enumerate(batch_answers) if unqualified[idx] == 0]
+            for q,a in zip(unqualified_Q,unqualified_A):
+                logger.info(f"{'-'*20}Discarded QA pair{'-'*20}")
+                logger.info(f"{'-'*15}Question{'-'*15}")
+                logger.info(f"{q}")
+                logger.info(f"{'-'*15}Answer{'-'*15}")
+                logger.info(f"{a}")
             new_questions.extend(verified_Q)
             new_answers.extend(verified_A)
         return new_questions,new_answers

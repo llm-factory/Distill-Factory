@@ -364,7 +364,6 @@ class WebUI:
             def read_from_datas(save_dir, file_name):
                 if self.timer_active:
                     save_path = Path(save_dir) / Path(file_name)
-                    print(f"save_path:{save_path}")
                     if not save_path.exists():
                         return pd.DataFrame(
                             columns=["question", "answer"]
@@ -396,13 +395,11 @@ class WebUI:
 
             def get_folder_path(uploaded_folder):
                 if uploaded_folder is None:
-                    return ""
-
+                    return "",""
                 if isinstance(uploaded_folder, list):
                     paths = [file.name for file in uploaded_folder]
-                    if paths:
-                        common_prefix = os.path.commonpath(paths)
-                        return common_prefix
+                    uploaded_folder = os.path.commonpath(paths)
+                    return "\n".join(paths),uploaded_folder
                 return ""
 
             async def config_loader_and_run(
@@ -533,7 +530,7 @@ class WebUI:
                 ]
             )
             file_upload.change(fn=get_file_path, inputs=file_upload, outputs=file_path)
-            folder_upload.change(fn=get_folder_path, inputs=folder_upload, outputs=file_folder)
+            folder_upload.change(fn=get_folder_path, inputs=folder_upload, outputs=[file_path,file_folder])
 
         return demo
 

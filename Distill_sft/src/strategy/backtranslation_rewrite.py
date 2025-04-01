@@ -31,6 +31,8 @@ class BacktransQAGenerator(Generator):
         self.meaningless_symbols = [' ', '，', '。', '、', '：', '；', '"', '"', ''', ''', '(', ')', '（', '）', '《', '》', '【', '】', '!', '！', '?', '？', '——', '……']
         self.split = config.quantity_level>=4
         self.num_questions_per_title = config.quantity_level
+        self.text_retriever = BaseTextRetriever(self.api,self.config)
+        self.qa_verifier = BaseQAVerifier(self.api)
 
     async def generate(self, text: str, config: Dict[str, Any]) -> Tuple[List[str], List[str]]:
         titles = await self._generate_titles(text,config)
@@ -43,10 +45,12 @@ class BacktransQAGenerator(Generator):
         answers = await self._generate_answers(text, questions)
         answers, idxs_to_remove = answers_filter(answers)
         questions = [q for idx, q in enumerate(questions) if idx not in idxs_to_remove]
-        
+
         rewritten_answers = await self._rewrite_answers(
             questions, answers, text, config.concurrent_api_requests_num
         )
+        if config.verify_qa:
+            questions, rewritten_answers = await self.qa_verifier.verify(text, questions, rewritten_answers)
         
         return questions, rewritten_answers
 

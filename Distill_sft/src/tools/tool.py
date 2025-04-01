@@ -136,13 +136,13 @@ def getFilePaths(config: Config) -> List[Path]:
     file = config.file_path
     file_type = config.file_type
     paths = []
-    if folder:
+    if file:
+        paths.extend(file)
+    else:    
         for root, dirs, files in os.walk(folder):
             for file in files:
                 if file.split('.')[-1] in file_type:
                     paths.append(Path(root, file))
-    else:
-        paths.extend(file)
     return paths
 
 
