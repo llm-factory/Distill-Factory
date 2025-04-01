@@ -3,7 +3,7 @@ from typing import List
 import fitz
 
 
-def pdf_to_images(pdf_data) -> List[bytes]:
+def pdf_to_images(pdf_data, dpi=150) -> List[bytes]:
     """
     将PDF文件的每一页转换为 PNG 图像格式，并返回包含所有页图像数据的字节列表。
 
@@ -17,7 +17,7 @@ def pdf_to_images(pdf_data) -> List[bytes]:
     images = []
     for page_num in range(len(pdf_document)):
         page = pdf_document.load_page(page_num)
-        pix = page.get_pixmap()
+        pix = page.get_pixmap(dpi=dpi)
         data = pix.tobytes("png")
         images.append(data)
     return images
