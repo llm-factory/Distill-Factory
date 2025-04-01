@@ -31,7 +31,7 @@ pip install -r requirements.txt
 
 ## 使用方式
 
-工具支持通过 [命令行](#命令行) 或 [WebUI](#WebUI) 方式使用。支持从[单文件](#单文件处理)、 [多文件](#多文件处理)、[JSON 文件](#JSON文件处理)以及 [PDF 文件](#PDF 文件处理)生成问答数据集。
+工具支持通过 [命令行](#命令行) 或 [WebUI](#WebUI) 方式使用。支持从[单文件](#单文件处理)、 [多文件](#多文件处理)、[JSON 文件](#JSON文件处理)以及 [PDF 文件](#PDF文件处理)生成问答数据集。
 
 ### WebUI
 
@@ -251,7 +251,7 @@ generation:
 
 ---
 
-#### PDF 文件处理
+#### PDF文件处理
 
 工具支持使用视觉大模型（VLM）来解析从复杂 PDF 文件中提取问答对合成 SFT 数据集，可以使用 `python main.py ../example/config/single_pdf_demo.yaml`  来执行该功能：
 
