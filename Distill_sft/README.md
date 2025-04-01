@@ -7,7 +7,7 @@ Distill-sft 是一个微调数据集生成工具，可以从文本内容中自�
 https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 ## 功能特点
 
-- 支持多种数据源输入：单文件、多文件、JSON 文件。
+- 支持多种数据源输入：单文件、多文件、JSON 文件、PDF 文件。
 - 提供 WebUI 和命令行两种使用方式。
 - 支持异步 API 请求，提高数据生成效率。
 - 支持开源大模型与闭源大模型接入。开源模型推荐使用 [vllm serve](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html?ref=blog.mozilla.ai#cli-reference) 进行部署 。闭源模型推荐使用 [One API](https://github.com/songquanpeng/one-api) 接入。
@@ -15,6 +15,7 @@ https://github.com/user-attachments/assets/e7a83918-fd41-4468-9faf-cf1f386ac6fc
 - 多种数据生成策略：
   - 基础问答生成 (genQA)：从文本中提取标题,根据标题生成相关问答对。
   - 回译重写生成 (backtranslation_rewrite)：通过回译和重写生成相关问答对。
+  - 多模态模型生成 (VisGen)：通过多模态模型识别 PDF 文档生成问答对。
   - 支持修改、扩展、自定义数据生成策略。
 
 ## 使用准备
@@ -30,7 +31,7 @@ pip install -r requirements.txt
 
 ## 使用方式
 
-工具支持通过 [命令行](#命令行) 或 [WebUI](#WebUI) 方式使用。支持从[单文件](#单文件处理)、 [多文件](#多文件处理) 以及[JSON 文件](#JSON文件处理) 生成问答数据集。
+工具支持通过 [命令行](#命令行) 或 [WebUI](#WebUI) 方式使用。支持从[单文件](#单文件处理)、 [多文件](#多文件处理)、[JSON 文件](#JSON文件处理)以及 [PDF 文件](#PDF 文件处理)生成问答数据集。
 
 ### WebUI
 
@@ -52,7 +53,7 @@ python webui.py
 
 ![image-20250307191915665](assets/image-20250307191915665.png)
 
-- api配置：填入所使用的 api 模型，请求地址及密钥即可
+- api 配置：填入所使用的 api 模型，请求地址及密钥即可
 
 - 文件配置：选择将要用于数据生成的文件，可以选择逐个文件上传或一次上传整个文件夹。上传整个文件夹时建议指定 File Type 文件类型以避免包含不需要的文件。
 
@@ -144,8 +145,6 @@ generation:
 
 除单文件处理外，该工具还支持 [多文件处理](#多文件处理) 与 [JSON 文件处理](#JSON文件处理)
 
-
-
 ------
 
 #### 多文件处理
@@ -161,7 +160,7 @@ api: # api相关配置
   api_key: ""
 file: # 生成数据集所用文件相关配置
   file_folder: "" # 输入文件夹路径
-  file_type: "" # 文件夹中需要使用的文件类型
+  file_type: [""] # 文件夹中需要使用的文件类型
   main_theme: "" # 文本主题
 generation: # 数据生成相关配置
   method: "" # 生成方式
@@ -175,7 +174,7 @@ generation: # 数据生成相关配置
 
 您可以通过在示例文件 `../example/config/multi_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
-`python main.py ../example/config/multi_file_demo.yaml ` 以尝试使用多个文件生成问答数据集。
+`python main.py ../example/config/multi_file_demo.yaml` 以尝试使用多个文件生成问答数据集。
 
 ```yaml
 ### ../example/config/multi_file_demo.yaml
@@ -185,7 +184,7 @@ api:
   api_key: ""
 file:
   file_folder: "../example/dataset/LLaMA-Factory-Doc" # 输入文件夹路径
-  file_type: "rst" # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
+  file_type: ["rst"] # 意味着 example/dataset/LLaMA-Factory-Doc 文件夹下所有的 rst 格式的文件都会被用于生成问答数据集
   main_theme: "LLaMA-Factory使用文档"
 generation:
   method: "genQA"
@@ -193,8 +192,6 @@ generation:
   save_dir: "../example/result"
   save_file_name: "multi_file_demo_QA.json"
 ```
-
-
 
 ----
 
@@ -228,7 +225,7 @@ generation:
 
 以下是 JSON 文件处理配置文件的完整示例，与其他配置文件类似，您可以通过在示例文件 `../example/config/json_file_demo.yaml` 中填入 API 相关配置并且在 `src` 文件夹下运行指令：
 
-`python main.py ../example/config/json_file_demo.yaml ` 以尝试使用 JSON 格式文件生成问答数据集。`../example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
+`python main.py ../example/config/json_file_demo.yaml` 以尝试使用 JSON 格式文件生成问答数据集。`../example/result/json_file_demo_QA.json` 提供了一个示例输出，您可以先查看以了解生成效果。
 
 ```yaml
 api:
@@ -252,11 +249,29 @@ generation:
 >
 >同样，您也可以指定 `file_folder` 和 `file_type` 以使用多个 JSON 格式文件生成问答数据集。
 
+---
 
+#### PDF 文件处理
 
+工具支持使用视觉大模型（VLM）来解析从复杂 PDF 文件中提取问答对合成 SFT 数据集，可以使用 `python main.py ../example/config/single_pdf_demo.yaml`  来执行该功能：
 
+```yaml
+### ../example/config/single_pdf_demo.yaml
+api:
+  model: "qwen2.5-vl-7b-instruct"  # 需要支持视觉输入的大模型
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1/"
+  api_key: "xxx"
+file:
+  is_structure_data: False  # 需要设为 False
+  file_path: "../example/dataset/a100-datasheet/hpc-datasheet-a100-datasheet-2188504-1.pdf"
+generation:
+  method: "VisGen"
+  concurrent_api_requests_num: 1
+  save_dir: "../example/result"
+  save_file_name: "pdf.json"
+```
 
-
+同样，如果需要支持多文件可以参照 `example/config/multi_pdf_demo.yaml`。
 
 ### 参数说明
 
